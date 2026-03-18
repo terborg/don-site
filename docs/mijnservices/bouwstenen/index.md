@@ -2,18 +2,11 @@
 sidebar_position: 3
 ---
 
-# De services in de klantreis
+# Bouwstenen
 
 De services zijn geen losse eilandjes, maar vormen samen een logische keten.
 Hieronder ziet u de services in de volgorde van een typische klantreis: van het
 eerste signaal tot het eindresultaat.
-
-## Notificatie en MijnBerichten
-
-De start. Alles begint met een signaal. De Notificatie-service zorgt dat
-inwoners een seintje krijgen (bijvoorbeeld via e-mail of app) dat er iets voor
-hen klaarstaat. Dit verwijst vaak naar MijnBerichten, de inbox voor formele post
-en meldingen, vergelijkbaar met de Berichtenbox van MijnOverheid.
 
 ## MijnTaken
 
@@ -48,3 +41,11 @@ Proactief en beheer. Met MijnActies (niet te verwarren met taken) biedt u
 proactieve tips, zoals het tijdig verlengen van een paspoort. In MijnProfiel
 beheert de inwoner zijn voorkeuren, zoals de manier waarop hij benaderd wil
 worden.
+
+## Test
+
+```mdx-code-block
+import DocCardList from '@theme/DocCardList';
+
+<DocCardList />
+```

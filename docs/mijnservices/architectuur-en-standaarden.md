@@ -1,8 +1,19 @@
 ---
-sidebar_position: 4
+sidebar_position: 3
 ---
 
-# Architectuur en standaarden
+# Architectuur en randvoorwaarden
+
+## Technische inrichting
+
+## Notificaties
+
+Alles begint met een signaal. De Notificatie-service zorgt dat inwoners een
+seintje krijgen (bijvoorbeeld via e-mail of app) dat er iets voor hen
+klaarstaat. Dit verwijst vaak naar MijnBerichten, de inbox voor formele post en
+meldingen, vergelijkbaar met de Berichtenbox van MijnOverheid.
+
+## Profielen
 
 ## API Design Rules
 
