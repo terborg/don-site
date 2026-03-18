@@ -1,10 +1,8 @@
 ---
-sidebar_position: 3
+sidebar_position: 4
 ---
 
-# Architectuur en randvoorwaarden
-
-## Technische inrichting
+# Randvoorwaarden
 
 ## Notificaties
 
@@ -47,19 +45,3 @@ Digitaal contact moet drempels wegnemen, niet opwerpen.
   bevestiging dat deze is verstuurd
 
 ## Profielen
-
-## API Design Rules
-
-Gebaseerd op de Nederlandse API strategie en NL GOV REST API
-
-## CloudEvents
-
-Gebruik van het NL GOV profile for CloudEvents voor notificaties. Relatie met
-bronnen: Hoe specifieke API's ontwikkeld worden voor het bevragen van
-onderliggende registraties.
-
-## Informatiemodellen
-
-## Veiligheid
-
-Informatie & Beveiliging. (BIO, AVG, Security by Design).
