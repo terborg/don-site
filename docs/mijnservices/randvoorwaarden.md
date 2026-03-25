@@ -44,4 +44,8 @@ Digitaal contact moet drempels wegnemen, niet opwerpen.
 - Context: Toon een gestelde vraag direct in de tijdlijn van contactmomenten als
   bevestiging dat deze is verstuurd
 
+## Identity provider
+
+DigiD, eHerkenning, itsme, etc.
+
 ## Profielen
