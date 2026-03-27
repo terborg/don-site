@@ -5,3 +5,7 @@ sidebar_custom_props:
 ---
 
 # MijnZaken
+
+MijnZaken is de _track & trace_ van de overheid. Het toont de status van lopende
+processen, de verwachte doorlooptijd, stappen die al zijn genomen en nog gaan
+komen.
