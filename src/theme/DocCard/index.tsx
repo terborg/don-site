@@ -125,10 +125,7 @@ function CardCategory({ item }: { item: PropSidebarItemCategory }): ReactNode {
 }
 
 function CardLink({ item }: { item: PropSidebarItemLink }): ReactNode {
-  const customIcon = item.customProps?.icon as string | undefined;
-  const icon = customIcon ? (
-    <img src={customIcon} className={styles.cardIcon} alt="" aria-hidden="true" />
-  ) : isInternalUrl(item.href) ? (
+  const icon = isInternalUrl(item.href) ? (
     <IconDocumentMetVlakkenEnLijnenErop className={styles.cardIcon} />
   ) : (
     <IconKetting2Schakels className={styles.cardIcon} />

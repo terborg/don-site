@@ -32,7 +32,3 @@
   width: 2rem;
   vertical-align: bottom;
 }
-
-img.cardIcon {
-  object-fit: contain;
-}
