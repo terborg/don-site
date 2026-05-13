@@ -54,7 +54,7 @@ Dit patroon biedt de volgende garanties:
 - **Sterke consistentie**: dit patroon biedt
   [sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency)
   per collectie — alle consumers zien wijzigingen in dezelfde totale volgorde.
-  Wie twee collecties combineert — elk met eigen volgnummers — heeft
+  Wie twee collecties combineert — elk met eigen id's — heeft
   [causale consistentie](https://en.wikipedia.org/wiki/Consistency_model#Causal_consistency)
   tussen de streams: de volgorde binnen elke collectie is gegarandeerd, maar er
   is geen totale volgorde over de twee streams heen.
@@ -133,8 +133,8 @@ GET /resources/snapshots
 
 Vervolgens haalt de consumer de inhoud op via het id. Grote snapshots worden
 gepagineerd geserveerd met offset-paginering; alle chunks hebben hetzelfde `id`.
-Via `total` berekent de consumer vooraf alle offsets (`ceil(850 / 100) = 9`
-chunks) en haalt ze parallel op:
+Via `total` berekent de consumer alle offsets vooraf en haalt de chunks op —
+sequentieel of parallel:
 
 ```http
 GET /resources/snapshots/42?limit=100             → {"id": 42, "items": [...]}
