@@ -73,6 +73,41 @@ collectie — maar ze kan verouderd zijn.
 
 ## Het patroon
 
+De consumer bevindt zich altijd in één van twee toestanden: snapshot ophalen of
+delta's volgen.
+
+```mermaid
+stateDiagram-v2
+    state "Cursorcheck" as s1
+    state "Snapshot laden" as s2
+    state "Delta toepassen" as s3
+    state "Up-to-date" as s4
+    [*] --> s1
+
+    s1 --> s3 : delta beschikbaar voor cursor
+    s2 --> s1
+    s1 --> s2 : oudste delta te nieuw voor cursor
+    s3 --> s1
+    s1 --> s4 : nieuwste delta zelfde als cursor
+    s4 --> s1
+```
+
+```mermaid
+stateDiagram-v2
+    state "Snapshot Laden" as Snapshot
+    state "Deltas Verwerken" as Inhalen
+    state "Actueel" as UpToDate
+
+    [*] --> Inhalen : Start met huidige cursor
+
+    Inhalen --> Snapshot : Cursor te oud / Hiaat gedetecteerd
+    Snapshot --> Inhalen : Snapshot verwerkt (Nieuwe cursor)
+
+    Inhalen --> UpToDate : Laatste delta bereikt
+    UpToDate --> Inhalen : Nieuwe delta ontvangen
+    UpToDate --> Snapshot : Verbinding hersteld (Check faalt)
+```
+
 Het patroon bestaat uit twee fases:
 
 1. **Snapshot**: de consumer haalt een consistente momentopname van de volledige
