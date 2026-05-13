@@ -181,11 +181,13 @@ De consumer weet dan dat hij opnieuw een snapshot moet ophalen.
 #### Streaming (SSE)
 
 De consumer opent een langdurige verbinding; de provider pusht delta's zodra ze
-beschikbaar zijn:
+beschikbaar zijn. De consumer stuurt `Last-Event-ID` mee als cursor — zowel bij
+de initiële verbinding als bij herverbinding na een onderbreking:
 
 ```http
-GET /resources/deltas?after=42
+GET /resources/deltas
 Accept: text/event-stream
+Last-Event-ID: 42
 
 → 200 OK (text/event-stream)
 
@@ -196,8 +198,7 @@ id: 63
 data: {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
 ```
 
-Na een verbroken verbinding hervat de consumer via `?after={cursor}`. De
-consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
+De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
 huidige cursor; een mismatch signaleert een hiaat.
 
 ## Event-driven (via broker)
