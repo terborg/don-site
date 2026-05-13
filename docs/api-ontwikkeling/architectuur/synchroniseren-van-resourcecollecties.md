@@ -73,8 +73,26 @@ collectie — maar ze kan verouderd zijn.
 
 ## Het patroon
 
-De consumer bevindt zich altijd in één van twee toestanden: snapshot ophalen of
-delta's volgen.
+Het patroon werkt met drie begrippen:
+
+- **Snapshot**: een consistente momentopname van de volledige resourcecollectie
+  op één moment. Een snapshot heeft een uniek `id` — dit kan een getal, een
+  tijdstempel of een hash zijn; de provider bepaalt de vorm. Een snapshot is het
+  startpunt voor een consumer die nog geen lokale toestand heeft. De
+  begintoestand van het systeem is een snapshot (eventueel leeg) met een door de
+  provider toegewezen initieel `id`.
+- **Delta**: een atomaire stap in de wijzigingsreeks — één of meer toevoegingen,
+  aanpassingen of verwijderingen die de provider als één geheel heeft
+  doorgevoerd. De consumer past een delta volledig toe of helemaal niet. Elke
+  delta heeft een `id` en een `prev_id`; een delta is toepasbaar als diens
+  `prev_id` overeenkomt met de cursor, waarna de cursor het `id` van de delta
+  wordt.
+- **Cursor**: het `id` van de laatste verwerkte snapshot of delta, lokaal
+  bijgehouden door de consumer. Een consumer zonder cursor heeft nog geen
+  snapshot opgehaald.
+
+De consumer doorloopt continu een cursorcheck die bepaalt wat de volgende stap
+is:
 
 ```mermaid
 flowchart TD
@@ -90,14 +108,13 @@ flowchart TD
     U --> C
 ```
 
-Het patroon bestaat uit twee fases:
-
-1. **Snapshot**: de consumer haalt een consistente momentopname van de volledige
-   collectie op. Het snapshot eindigt met een volgnummer dat aangeeft op welk
-   moment de momentopname is genomen.
-2. **Delta's**: de consumer vraagt alle wijzigingen op die ná het snapshot zijn
-   opgetreden, gesorteerd op oplopend volgnummer. Zodra de consumer bij de
-   huidige toestand is, blijft hij luisteren of pollt hij periodiek.
+- **Delta toepassen**: er is een delta beschikbaar voor de cursor. De consumer
+  past de delta toe en schuift de cursor op.
+- **Snapshot laden**: de consumer is te ver achter; de provider heeft geen delta
+  voor de huidige cursor. De consumer haalt een nieuw snapshot op om in te
+  springen.
+- **Up-to-date**: er zijn geen nieuwere delta's. De consumer wacht op de
+  volgende delta (via SSE of polling).
 
 ```mermaid
 sequenceDiagram
