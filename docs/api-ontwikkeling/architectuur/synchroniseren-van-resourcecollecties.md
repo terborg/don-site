@@ -77,35 +77,17 @@ De consumer bevindt zich altijd in één van twee toestanden: snapshot ophalen o
 delta's volgen.
 
 ```mermaid
-stateDiagram-v2
-    state "Cursorcheck" as s1
-    state "Snapshot laden" as s2
-    state "Delta toepassen" as s3
-    state "Up-to-date" as s4
-    [*] --> s1
+flowchart TD
+    Start((●)) --> C{Cursorcheck}
 
-    s1 --> s3 : delta beschikbaar voor cursor
-    s2 --> s1
-    s1 --> s2 : oudste delta te nieuw voor cursor
-    s3 --> s1
-    s1 --> s4 : nieuwste delta zelfde als cursor
-    s4 --> s1
-```
+    C -->|Delta beschikbaar| A[Delta toepassen]
+    A --> C
 
-```mermaid
-stateDiagram-v2
-    state "Snapshot Laden" as Snapshot
-    state "Deltas Verwerken" as Inhalen
-    state "Actueel" as UpToDate
+    C -->|Te ver achter| S[Snapshot laden]
+    S --> C
 
-    [*] --> Inhalen : Start met huidige cursor
-
-    Inhalen --> Snapshot : Cursor te oud / Hiaat gedetecteerd
-    Snapshot --> Inhalen : Snapshot verwerkt (Nieuwe cursor)
-
-    Inhalen --> UpToDate : Laatste delta bereikt
-    UpToDate --> Inhalen : Nieuwe delta ontvangen
-    UpToDate --> Snapshot : Verbinding hersteld (Check faalt)
+    C -->|Geen nieuwere delta| U[Up-to-date]
+    U --> C
 ```
 
 Het patroon bestaat uit twee fases:
