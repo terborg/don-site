@@ -58,11 +58,9 @@ Dit patroon biedt de volgende garanties:
   [causale consistentie](https://en.wikipedia.org/wiki/Consistency_model#Causal_consistency)
   tussen de streams: de volgorde binnen elke collectie is gegarandeerd, maar er
   is geen totale volgorde over de twee streams heen.
-- **Inhaalbaarheid en inspringen**: op basis van een volgnummer kan een consumer
-  op elk moment inspringen — zowel een nieuwe consumer die na het snapshot
-  begint als een consumer die na een onderbreking gemiste wijzigingen opnieuw
-  opvraagt. Het volgnummer is de enige coördinatieprimitief die hiervoor nodig
-  is.
+- **Inhaalbaarheid en inspringen**: via de cursor kan een consumer op elk moment
+  inspringen — zowel een nieuwe consumer die nog geen lokale toestand heeft als
+  een consumer die na een onderbreking gemiste wijzigingen bijwerkt.
 
 Deze garanties hebben een prijs: een consumer loopt altijd enigszins achter op
 de werkelijkheid. Bij REST polling zit er een venster tussen het moment van een
@@ -98,14 +96,14 @@ is:
 flowchart TD
     Start((●)) --> C{Cursorcheck}
 
-    C -->|Delta beschikbaar| A[Delta toepassen]
+    C -->|Delta<br>beschikbaar| A[Delta toepassen]
     A --> C
 
     C -->|Te ver achter| S[Snapshot laden]
     S --> C
 
-    C -->|Geen nieuwere delta| U[Up-to-date]
-    U --> C
+    C -->|Geen nieuwere<br>delta| U[Up-to-date]
+    U -->|Nieuwere delta<br>ontvangen| C
 ```
 
 - **Delta toepassen**: er is een delta beschikbaar voor de cursor. De consumer
@@ -116,162 +114,127 @@ flowchart TD
 - **Up-to-date**: er zijn geen nieuwere delta's. De consumer wacht op de
   volgende delta (via SSE of polling).
 
-```mermaid
-sequenceDiagram
-    participant c as Consumer
-    participant p as Provider
+## REST API
 
-    c->>p: Vraag snapshot aan
-    p-->>c: Snapshot (volgnummer 100)
-    c->>p: Geef delta's na 100
-    p-->>c: Delta (volgnummer 142)
-    p-->>c: Delta (volgnummer 187)
-    note over c: Consumer is actueel
-    note over p: Nieuwe wijziging
-    p-->>c: Delta (volgnummer 203)
-```
+### Snapshot ophalen
 
-## Snapshot ophalen
-
-De provider maakt een consistente momentopname door een databasetransactie te
-starten met tenminste `repeatable read`-isolatieniveau. Daarmee blijft de
-gelezen toestand stabiel voor de hele duur van het snapshot, ook als de
-onderliggende collectie ondertussen wijzigt.
-
-De consumer vraagt het snapshot op en verwerkt de inhoud totdat het
-eindvolgnummer bereikt is:
+De provider biedt een lijst van beschikbare snapshots. De consumer vraagt deze
+op en kiest het meest recente:
 
 ```http
-GET /resources/snapshots/latest
+GET /resources/snapshots
 → 200 OK
-  {"items": [...], "snapshot_seq": 100}
+  {
+    "items": [
+      {"id": 42, "created_at": "2026-05-13T10:00:00Z", "total": 850}
+    ]
+  }
 ```
 
-Het `snapshot_seq`-veld is de cursor van de consumer na het ophalen van het
-snapshot: het snapshot omvat alle wijzigingen tot en met `100`. Elk delta met
-een `seq` _groter dan_ `100` is nog niet in het snapshot verwerkt en moet na het
-ophalen worden toegepast.
-
-Volgnummers zijn strikt oplopend maar hoeven niet aaneengesloten te zijn. Tussen
-`100` en de eerste delta kan een groot gat zitten — dat is normaal. Wat telt is
-de volgorde, niet de stap.
-
-## Delta's volgen
-
-De consumer beheert een cursor: het volgnummer van zijn huidige lokale toestand
-(na het snapshot: `snapshot_seq`). Hij vraagt alle delta's op met een `seq`
-groter dan zijn cursor, en verwerkt ze in volgorde.
-
-Een delta met `seq: 142` brengt de lokale toestand naar `142`. De delta bevat
-zowel de inhoudelijke wijziging als het nieuwe volgnummer — na het toepassen
-ervan zet de consumer zijn cursor naar `142`. Dat getal hoeft niet geconsecutief
-te zijn met de vorige cursor: als het snapshot eindigt op `100` en de eerste
-delta `seq: 142` heeft, is dat normaal. Wat telt is dat de consumer de delta's
-in oplopende volgorde verwerkt en zijn cursor bijhoudt.
-
-Elk delta-bericht bevat het volgnummer, het type wijziging en de betrokken
-resource:
-
-```json
-{
-  "seq": 142,
-  "type": "updated",
-  "id": "item-abc",
-  "resource": { "...": "..." }
-}
-```
-
-De keuze voor een transportvorm verandert het semantische model niet. Dezelfde
-`seq`-waarden, hetzelfde event-model, dezelfde inhaalbaarheid — alleen het
-mechanisme verschilt.
-
-### REST polling
-
-De consumer vraagt periodiek nieuwe delta's op:
+Vervolgens haalt de consumer de inhoud op via het id. Grote snapshots worden
+gepagineerd geserveerd met offset-paginering; alle chunks hebben hetzelfde `id`.
+Via `total` berekent de consumer vooraf alle offsets (`ceil(850 / 100) = 9`
+chunks) en haalt ze parallel op:
 
 ```http
-GET /resources/changes?after=100
-→ 200 OK
-  {"items": [{"seq": 142, ...}, {"seq": 187, ...}], "next_seq": 187}
+GET /resources/snapshots/42?limit=100             → {"id": 42, "items": [...]}
+GET /resources/snapshots/42?offset=100&limit=100  → {"id": 42, "items": [...]}
+GET /resources/snapshots/42?offset=200&limit=100  → {"id": 42, "items": [...]}
+…
 ```
 
-Eenvoudig te implementeren; geen langdurige verbinding nodig. Nadeel: er zit
-latentie tussen het moment van de wijziging en het moment van opvragen.
+Omdat snapshots statisch zijn, treedt er geen page skew op. Na de laatste chunk
+stelt de consumer de cursor in op `42`. De provider houdt snapshots beschikbaar
+gedurende een vaste retentieperiode zodat consumers de tijd hebben om ze
+volledig te downloaden.
 
-### Server-Sent Events (SSE)
+### Delta's ophalen
+
+#### Polling
+
+De consumer vraagt periodiek nieuwe delta's op via zijn cursor:
+
+```http
+GET /resources/deltas?after=42&limit=10
+→ 200 OK
+  {
+    "items": [
+      {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", "resource": {...}},
+      {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
+    ]
+  }
+```
+
+De consumer past elke delta toe en zet de cursor naar het `id` van de laatste
+verwerkte delta. Een lege itemslijst betekent dat de consumer actueel is.
+
+Als de cursor niet meer bekend is bij de provider, antwoordt de provider met
+`410 Gone`:
+
+```http
+GET /resources/deltas?after=99
+→ 410 Gone
+```
+
+De consumer weet dan dat hij opnieuw een snapshot moet ophalen.
+
+#### Streaming (SSE)
 
 De consumer opent een langdurige verbinding; de provider pusht delta's zodra ze
 beschikbaar zijn:
 
 ```http
-GET /resources/changes
-Last-Event-ID: 100
+GET /resources/deltas?after=42
 Accept: text/event-stream
 
-→ 200 OK  (text/event-stream)
+→ 200 OK (text/event-stream)
 
-id: 102
-data: {"seq": 102, "type": "updated", "id": "item-abc", ...}
+id: 57
+data: {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
 
-id: 103
-data: {"seq": 103, "type": "deleted", "id": "item-xyz"}
+id: 63
+data: {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
 ```
 
-De `Last-Event-ID`-header fungeert als catch-up-mechanisme: na een verbroken
-verbinding hervat de consumer automatisch vanaf het laatste verwerkte
-volgnummer. SSE ondersteunt dit van nature en is hiermee bijzonder geschikt voor
-dit patroon.
+Na een verbroken verbinding hervat de consumer via `?after={cursor}`. De
+consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
+huidige cursor; een mismatch signaleert een hiaat.
 
-### Event-driven (via broker)
+## Event-driven (via broker)
 
 De provider publiceert delta's op een topic; de consumer verwerkt ze op eigen
 tempo:
 
 ```
 topic: nl.example.resources.changes
-message: {"seq": 102, "type": "updated", "id": "item-abc", ...}
+message: {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
 ```
 
 Geschikt wanneer consumer en provider ontkoppeld moeten zijn qua timing. De
-consumer beheert zelf de offset of cursor in de broker. Het snapshot wordt in
-dit geval doorgaans nog steeds via REST opgehaald.
-
-## Wanneer opnieuw synchroniseren
-
-Als delta's niet langer beschikbaar zijn voor het gevraagde volgnummer — doordat
-de provider delta's na een bepaalde periode verwijdert — moet de consumer
-opnieuw beginnen: een nieuw snapshot ophalen en delta's verwerken vanaf het
-bijbehorende volgnummer.
-
-Gaps in de reeks zijn geen fout maar een grenssignaal: de provider geeft aan dat
-hij geen volledige historie meer garandeert voor dat volgnummer.
+consumer beheert zelf de cursor in de broker. Het snapshot wordt doorgaans nog
+steeds via REST opgehaald.
 
 ## Implementatie-aandachtspunten
-
-### Strikt oplopend volgnummer
-
-Elke delta moet een uniek en oplopend volgnummer hebben. Daarmee weet een
-consumer precies welke wijzigingen al verwerkt zijn en welke nog ontbreken.
 
 ### Geen wijzigingen verliezen tijdens snapshotten
 
 Een cruciale verantwoordelijkheid van de provider is dat er geen wijzigingen
 verloren gaan die optreden terwijl een snapshot wordt verstuurd. Zorg dat de
-bron van delta's — bijvoorbeeld een
+bron van delta's — bijvoorbeeld een transactionele outbox — niet wordt geleegd
+terwijl het snapshot nog actief is.
 
-<!-- [transactionele outbox](./transactionele-outbox.md) — niet wordt geleegd terwijl -->
+### Retentie van snapshots en delta's
 
-het snapshot nog actief is.
-
-De provider kan op basis van beschikbare volgnummers bepalen of een consumer kan
-volstaan met delta's, of eerst opnieuw een snapshot nodig heeft.
+De provider moet snapshots en delta's beschikbaar houden voor een
+retentieperiode die groot genoeg is voor een consumer om ze te verwerken. Daarna
+mag de provider ze verwijderen. Ontvangt de consumer een `410 Gone`, dan is de
+cursor verlopen en moet opnieuw een snapshot worden opgehaald.
 
 ### Geen volledige geschiedenis
 
 Dit patroon biedt nadrukkelijk geen complete geschiedenis van alle wijzigingen.
-Als een consumer te ver achteroploopt en een delta niet meer beschikbaar is,
-moet opnieuw een volledig snapshot worden opgehaald. Systemen die een complete
-wijzigingshistorie nodig hebben, vereisen een ander patroon.
+Systemen die een complete wijzigingshistorie nodig hebben, vereisen een ander
+patroon.
 
 ## Gerelateerde patronen
 
