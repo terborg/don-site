@@ -9,10 +9,10 @@ tags:
 # Synchroniseren van resourcecollecties
 
 Dit artikel beschrijft het **snapshots-en-delta's**-patroon waarmee een consumer
-een continu veranderende resourcecollectie kan opvragen en bijhouden. Het
-patroon is transport-onafhankelijk en werkt in REST-, SSE- en event-driven
-opstellingen. Het kan daarmee volledig **in-band** (via hetzelfde API endpoint)
-lopen — zonder extra infrastructuur zoals een message broker.
+synchroon kan lopen met een continu veranderende resourcecollectie van
+arbitraire grootte. Het patroon is transport-agnostisch: het werkt over HTTP
+(polling of SSE) of via een message broker. Over HTTP kan het een extensie zijn
+van een bestaande API — zonder extra modules of diensten.
 
 ```mermaid
 graph RL
@@ -32,6 +32,11 @@ Omdat het patroon geen volledige historische replay vereist, is het ook geschikt
 voor resourcecollecties die persoonsgegevens kunnen bevatten: een volledige
 geschiedenis van wijzigingen is niet
 [AVG-conform](https://www.autoriteitpersoonsgegevens.nl/themas/basis-avg/privacyrechten-avg/recht-op-gegevens-verwijderen).
+
+De provider kan op elk moment een nieuwe snapshot publiceren — na een
+datamigratie, schemawijziging, complete reset of nadat het recht op verwijderen
+is toegepast. Consumers ontdekken dit vanzelf via het protocol en synchroniseren
+opnieuw zonder dat de provider ze actief hoeft te notificeren.
 
 ## Het probleem
 
@@ -116,6 +121,22 @@ flowchart TD
 
 ## REST API
 
+De onderstaande invulling is een aanbeveling. Het patroon zelf — snapshot,
+delta, cursor — is leidend; de URL-structuur en veldnamen zijn niet verplicht.
+Wie de aanbeveling volgt, maakt zijn API direct bruikbaar voor consumers die het
+patroon kennen.
+
+Het patroon voegt twee sub-resources toe aan een (eventueel bestaande)
+collectie:
+
+```text
+GET /resources/             → de collectie zelf (ongewijzigd)
+GET /resources/snapshots/   → lijst van beschikbare snapshots
+GET /resources/snapshots/42 → inhoud van snapshot 42 (offset + limit)
+GET /resources/deltas/      → stroom van delta's (polling of SSE);
+                              geen individuele delta's
+```
+
 ### Snapshot ophalen
 
 De provider biedt een lijst van beschikbare snapshots. De consumer vraagt deze
@@ -147,6 +168,10 @@ Omdat snapshots statisch zijn, treedt er geen page skew op. Na de laatste chunk
 stelt de consumer de cursor in op `42`. De provider houdt snapshots beschikbaar
 gedurende een vaste retentieperiode zodat consumers de tijd hebben om ze
 volledig te downloaden.
+
+Snapshot-chunks zijn statische bestanden en kunnen potentieel groot zijn. Ze
+lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
+ontlasten.
 
 ### Delta's ophalen
 
@@ -200,6 +225,41 @@ data: {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
 
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
 huidige cursor; een mismatch signaleert een hiaat.
+
+#### Webhooks
+
+De provider pusht delta's naar een endpoint van de consumer zodra ze beschikbaar
+zijn:
+
+```http
+POST https://consumer.example.nl/webhook/resources
+Content-Type: application/json
+
+{"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
+```
+
+Bij polling en SSE initieert de consumer alle verbindingen, waardoor alleen
+eenzijdige authenticatie nodig is. Webhooks — waarbij de provider actief naar de
+consumer pusht — vereisen een publiek bereikbaar consumer-endpoint en
+tweezijdige authenticatie.
+
+#### CloudEvents
+
+Delta's kunnen in een [CloudEvents](https://cloudevents.io/)-envelop worden
+verpakt, ongeacht het transportmechanisme (HTTP, SSE, broker):
+
+```json
+{
+  "specversion": "1.0",
+  "type": "nl.example.resources.updated",
+  "source": "/resources",
+  "id": "57",
+  "data": {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
+}
+```
+
+CloudEvents standaardiseert de envelop; de delta-velden in `data` blijven
+ongewijzigd.
 
 ## Event-driven (via broker)
 
