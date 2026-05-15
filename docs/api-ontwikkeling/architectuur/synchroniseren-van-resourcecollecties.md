@@ -34,9 +34,10 @@ bij resourcecollecties met persoonsgegevens, waar dataminimalisatie en
 bewaartijd expliciete ontwerpkeuzes zijn.
 
 De provider kan op elk moment een nieuwe snapshot publiceren — na een
-datamigratie, schemawijziging, complete reset of nadat het recht op verwijderen
-is toegepast. Consumers ontdekken dit vanzelf via het protocol en synchroniseren
-opnieuw zonder dat de provider ze actief hoeft te notificeren.
+datamigratie, schemawijziging, terugdraaien naar een eerdere toestand, complete
+reset of nadat het recht op verwijderen is toegepast. Consumers ontdekken dit
+vanzelf via het protocol en synchroniseren opnieuw zonder dat de provider ze
+actief hoeft te notificeren.
 
 ## Het probleem
 
@@ -110,10 +111,12 @@ Het patroon werkt met drie begrippen:
 - **Delta**: een atomaire stap in de wijzigingsreeks. Dit kan één enkele mutatie
   op een resource zijn, of een groepering van in één transactie samengevoegde
   mutaties. De consumer past een delta volledig toe of helemaal niet. Elke delta
-  heeft een `id` en een `prev_id`; een delta is toepasbaar als diens `prev_id`
-  overeenkomt met de cursor, waarna de cursor het `id` van de delta wordt. In de
-  verdere eenvoudige voorbeelden hieronder staat elke delta gelijk aan één
-  resourcewijziging.
+  heeft een `id` en een `prev_id` — in hetzelfde formaat als snapshot-IDs, want
+  snapshots en delta's delen één ID-ruimte. De `prev_id` van de allereerste
+  delta verwijst naar het `id` van het initiële snapshot. Een delta is
+  toepasbaar als diens `prev_id` overeenkomt met de cursor, waarna de cursor het
+  `id` van de delta wordt. In de verdere eenvoudige voorbeelden hieronder staat
+  elke delta gelijk aan één resourcewijziging.
 - **Cursor**: het `id` van de laatste verwerkte snapshot of delta, lokaal
   bijgehouden door de consumer. Een consumer zonder cursor heeft nog geen
   snapshot opgehaald.
@@ -130,7 +133,7 @@ flowchart TD
     C -->|Delta<br>beschikbaar| A[Delta toepassen]
     A --> C
 
-    C -->|Te ver achter| S[Snapshot laden]
+    C -->|Geen geldige<br>cursor| S[Snapshot laden]
     S --> C
 
     C -->|Geen nieuwere<br>delta| U[Up-to-date]
@@ -139,9 +142,9 @@ flowchart TD
 
 - **Delta toepassen**: er is een delta beschikbaar voor de cursor. De consumer
   past de delta toe en schuift de cursor op.
-- **Snapshot laden**: de consumer is te ver achter; de provider heeft geen delta
-  voor de huidige cursor. De consumer haalt een nieuw snapshot op om in te
-  springen.
+- **Snapshot laden**: de consumer heeft geen geldige cursor — bij het eerste
+  gebruik, na een `410 Gone`, of na een `prev_id`-mismatch. De consumer haalt
+  een nieuw snapshot op om in te springen.
 - **Up-to-date**: er zijn geen nieuwere delta's. De consumer wacht op de
   volgende delta (via SSE of polling).
 
@@ -166,11 +169,11 @@ flowchart TD
 - **Delta publiceren**: bij elke wijziging of groep wijzigingen legt de provider
   een delta atomair vast — met een nieuw `id` en het vorige `id` als `prev_id`.
   De delta-keten blijft zo aaneengesloten.
-- **Snapshot aanmaken**: na een datamigratie, schemawijziging, toepassing van
-  het recht op verwijdering of een andere complete reset maakt de provider een
-  nieuw snapshot aan. Consumers ontdekken dit vanzelf: bij polling en
-  SSE-herverbinding via `410 Gone`, bij webhooks en broker via een
-  `prev_id`-mismatch in de volgende ontvangen delta.
+- **Snapshot aanmaken**: na een datamigratie, schemawijziging, terugdraaien naar
+  een eerdere toestand, toepassing van het recht op verwijdering of een andere
+  complete reset maakt de provider een nieuw snapshot aan. Consumers ontdekken
+  dit vanzelf: bij polling en SSE-herverbinding via `410 Gone`, bij webhooks en
+  broker via een `prev_id`-mismatch in de volgende ontvangen delta.
 - **Verouderde data opruimen**: na het verstrijken van de retentieperiode
   verwijdert de provider snapshots en delta's. Bij polling en SSE-herverbinding
   ontvangen consumers met een verlopen cursor `410 Gone`; bij webhooks en broker
@@ -197,7 +200,7 @@ GET /resources/deltas/      → stroom van delta's (polling of SSE);
 ### Snapshot ophalen
 
 De provider biedt een lijst van beschikbare snapshots. De consumer vraagt deze
-op en kiest het meest recente:
+op en kiest het snapshot met de meest recente `created_at`:
 
 ```http
 GET /resources/snapshots
@@ -215,9 +218,9 @@ Via `total` berekent de consumer alle offsets vooraf en haalt de chunks op —
 sequentieel of parallel:
 
 ```http
-GET /resources/snapshots/42?limit=100             → {"id": 42, "items": [...]}
-GET /resources/snapshots/42?offset=100&limit=100  → {"id": 42, "items": [...]}
-GET /resources/snapshots/42?offset=200&limit=100  → {"id": 42, "items": [...]}
+GET /resources/snapshots/42?limit=100             → {"id": 42, "total": 850, "items": [...]}
+GET /resources/snapshots/42?offset=100&limit=100  → {"id": 42, "total": 850, "items": [...]}
+GET /resources/snapshots/42?offset=200&limit=100  → {"id": 42, "total": 850, "items": [...]}
 …
 ```
 
@@ -226,7 +229,10 @@ het nieuwe snapshot bij voorkeur in een aparte staging-area en schakelt pas over
 naar de nieuwe toestand — en verwijdert de vorige — als alle chunks succesvol
 zijn binnengekomen. Na de laatste chunk stelt de consumer de cursor in op `42`.
 De provider houdt snapshots beschikbaar gedurende een vaste retentieperiode
-zodat consumers de tijd hebben om ze volledig te downloaden.
+zodat consumers de tijd hebben om ze volledig te downloaden. Verloopt een
+snapshot voordat de download is voltooid — kenbaar via `410 Gone` op een latere
+chunk — dan herhaalt de consumer het proces met het meest recente beschikbare
+snapshot.
 
 Snapshot-chunks zijn statische bestanden en kunnen potentieel groot zijn. Ze
 lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
@@ -303,17 +309,7 @@ GET /resources/deltas?after=42&limit=10
           {
             "type": "updated",
             "resource_id": "item-abc",
-            "resource": { "id": "item-abc", "name": "Resource ABC - Gewijzigd", "status": "actief" }
-          }
-        ]
-      },
-      {
-        "id": 63,
-        "prev_id": 57,
-        "operations": [
-          {
-            "type": "deleted",
-            "resource_id": "item-xyz"
+            "resource": { "id": "item-abc", "name": "Resource ABC - Gewijzigd" }
           }
         ]
       }
@@ -366,20 +362,14 @@ vast op `200 OK` zodra de verbinding is opgezet. Raakt de cursor verlopen
 terwijl de verbinding open staat, dan sluit de provider de verbinding:
 
 ```http
-GET /resources/deltas
-Accept: text/event-stream
-Last-Event-ID: 42
-
-→ 200 OK (text/event-stream)
-
 id: 57
 data: {"id": 57, "prev_id": 42, ...}
 
 ← verbinding gesloten door provider
 ```
 
-Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; de provider
-antwoordt dan met `410 Gone`:
+Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; als die cursor
+inmiddels niet meer bekend is, antwoordt de provider met `410 Gone`:
 
 ```http
 GET /resources/deltas
@@ -431,7 +421,10 @@ een nieuw snapshot op via de snapshot-API.
 Bij polling en SSE initieert de consumer alle verbindingen, waardoor alleen
 eenzijdige authenticatie nodig is. Webhooks — waarbij de provider actief naar de
 consumer pusht — vereisen een publiek bereikbaar consumer-endpoint en
-tweezijdige authenticatie.
+tweezijdige authenticatie. Bovendien moet de consumer de herkomst van elk
+inkomend bericht verifiëren, bijvoorbeeld via een HMAC-handtekening over de
+payload die de provider als request-header meestuurt. Zo kunnen alleen
+geautoriseerde providers delta's aanleveren.
 
 #### CloudEvents
 
@@ -459,7 +452,9 @@ verpakt, ongeacht het transportmechanisme (HTTP, SSE, broker):
 ```
 
 CloudEvents standaardiseert de envelop; de delta-velden in `data` blijven
-ongewijzigd.
+ongewijzigd. Let op: het envelope-veld `id` is per CloudEvents-specificatie
+altijd een string (`"57"`), terwijl het `id` in `data` de door de provider
+bepaalde vorm behoudt (in de voorbeelden een getal).
 
 ## Event-driven (via broker)
 
@@ -510,16 +505,14 @@ snapshot worden opgehaald.
 
 ### Geen volledige geschiedenis
 
-Dit patroon biedt nadrukkelijk geen complete geschiedenis van alle wijzigingen.
-Systemen die een complete wijzigingshistorie nodig hebben, vereisen een ander
-patroon.
+Dit patroon is niet bedoeld om een complete geschiedenis van alle wijzigingen te
+ontsluiten. Wie volledige historische replay of audit-trails nodig heeft, heeft
+daar snapshots niet voor nodig maar bijvoorbeeld een event-sourcingpatroon.
 
 ## Gerelateerde patronen
 
 - Voor navigatie door de snapshot-pagina's (en een vergelijking van
-pagineerstrategieën), zie
-[Paginering van resourcecollecties](./paginering-van-resourcecollecties.md).
-<!-- - Voor betrouwbare publicatie van wijzigingen aan de providerzijde, zie
-  [Transactionele outbox](./transactionele-outbox.md). -->
+  pagineerstrategieën), zie
+  [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md).
 - Voor een bredere introductie op event-driven communicatiepatronen, zie
   [Event Driven Architecture](./eda.md).
