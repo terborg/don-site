@@ -94,6 +94,8 @@ Het patroon werkt met drie begrippen:
   bijgehouden door de consumer. Een consumer zonder cursor heeft nog geen
   snapshot opgehaald.
 
+### Consumer
+
 De consumer doorloopt continu een cursorcheck die bepaalt wat de volgende stap
 is:
 
@@ -118,6 +120,37 @@ flowchart TD
   springen.
 - **Up-to-date**: er zijn geen nieuwere delta's. De consumer wacht op de
   volgende delta (via SSE of polling).
+
+### Provider
+
+De provider kent een vergelijkbare cyclus:
+
+```mermaid
+flowchart TD
+    Start((●)) --> W{Wachten}
+
+    W -->|Wijziging doorgevoerd| D[Delta publiceren]
+    D --> W
+
+    W -->|Snapshot-trigger| S[Snapshot aanmaken]
+    S --> W
+
+    W -->|Retentie verlopen| R[Verouderde data opruimen]
+    R --> W
+```
+
+- **Delta publiceren**: bij elke wijziging of groep wijzigingen legt de provider
+  een delta atomair vast — met een nieuw `id` en het vorige `id` als `prev_id`.
+  De delta-keten blijft zo aaneengesloten.
+- **Snapshot aanmaken**: na een datamigratie, schemawijziging, toepassing van
+  het recht op verwijdering of een andere complete reset maakt de provider een
+  nieuw snapshot aan. Consumers ontdekken dit vanzelf: bij polling en
+  SSE-herverbinding via `410 Gone`, bij webhooks en broker via een
+  `prev_id`-mismatch in de volgende ontvangen delta.
+- **Verouderde data opruimen**: na het verstrijken van de retentieperiode
+  verwijdert de provider snapshots en delta's. Bij polling en SSE-herverbinding
+  ontvangen consumers met een verlopen cursor `410 Gone`; bij webhooks en broker
+  signaleert een `prev_id`-mismatch dat de cursor verlopen is.
 
 ## REST API
 
@@ -226,6 +259,36 @@ data: {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
 huidige cursor; een mismatch signaleert een hiaat.
 
+Een open SSE-verbinding kan geen `410 Gone` ontvangen: de HTTP-statuscode ligt
+vast op `200 OK` zodra de verbinding is opgezet. Raakt de cursor verlopen
+terwijl de verbinding open staat, dan sluit de provider de verbinding:
+
+```http
+GET /resources/deltas
+Accept: text/event-stream
+Last-Event-ID: 42
+
+→ 200 OK (text/event-stream)
+
+id: 57
+data: {"id": 57, "prev_id": 42, ...}
+
+← verbinding gesloten door provider
+```
+
+Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; de provider
+antwoordt dan met `410 Gone`:
+
+```http
+GET /resources/deltas
+Accept: text/event-stream
+Last-Event-ID: 99
+→ 410 Gone
+```
+
+De consumer haalt dan een nieuw snapshot op en opent daarna een nieuwe
+verbinding met de cursor van dat snapshot.
+
 #### Webhooks
 
 De provider pusht delta's naar een endpoint van de consumer zodra ze beschikbaar
@@ -237,6 +300,10 @@ Content-Type: application/json
 
 {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
 ```
+
+De consumer valideert `prev_id` bij elk ontvangen bericht. Een mismatch
+signaleert dat de delta-keten is gereset of de cursor anderszins verlopen is; de
+consumer haalt dan een nieuw snapshot op via de snapshot-API.
 
 Bij polling en SSE initieert de consumer alle verbindingen, waardoor alleen
 eenzijdige authenticatie nodig is. Webhooks — waarbij de provider actief naar de
@@ -273,7 +340,8 @@ message: {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc",
 
 Geschikt wanneer consumer en provider ontkoppeld moeten zijn qua timing. De
 consumer beheert zelf de cursor in de broker. Het snapshot wordt doorgaans nog
-steeds via REST opgehaald.
+steeds via REST opgehaald. De consumer valideert ook hier `prev_id`; een
+mismatch is het signaal om een nieuw snapshot op te halen.
 
 ## Implementatie-aandachtspunten
 
@@ -288,8 +356,10 @@ terwijl het snapshot nog actief is.
 
 De provider moet snapshots en delta's beschikbaar houden voor een
 retentieperiode die groot genoeg is voor een consumer om ze te verwerken. Daarna
-mag de provider ze verwijderen. Ontvangt de consumer een `410 Gone`, dan is de
-cursor verlopen en moet opnieuw een snapshot worden opgehaald.
+mag de provider ze verwijderen. Bij polling en SSE-herverbinding ontvangt de
+consumer dan `410 Gone`; bij webhooks en broker detecteert de consumer een
+`prev_id`-mismatch. In beide gevallen is de cursor verlopen en moet opnieuw een
+snapshot worden opgehaald.
 
 ### Geen volledige geschiedenis
 
