@@ -40,14 +40,33 @@ opnieuw zonder dat de provider ze actief hoeft te notificeren.
 
 ## Het probleem
 
-Bestaande aanpakken schieten tekort:
+In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
+lokale kopie (een _mirror_ of _read model_) van een resourcecollectie. Dit stelt
+hen in staat om data snel te bevragen, lokaal te verrijken of te koppelen, en
+autonomer te opereren. Zodra de dataset echter groot is en de updates frequent
+zijn, lopen bestaande synchronisatie-benaderingen tegen technische grenzen aan:
 
-- **Gepagineerde `GET`s en polling** geven page skew: bij een veranderende
-  collectie kunnen items ontbreken of dubbel voorkomen. Zie
+- **Naïef periodiek ophalen schaalt niet:** Bij grote collecties (bijvoorbeeld
+  honderdduizenden records) is het periodiek inlezen van de volledige set
+  onwerkbaar. Het resulteert in onnodig netwerkverkeer, langdurige
+  verwerkingstijden en onnodige druk op de systemen van de provider.
+- **Gepagineerde `GET`s lijden onder 'page skew':** Vraagt een consumer de data
+  in stukjes op en muteert de collectie in de tussentijd, dan verschuiven de
+  records over de paginagrenzen. Tijdens dit proces kunnen items ongemerkt
+  worden overgeslagen of dubbel worden ingelezen. Zie
   [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md)
   voor een uitleg van dit probleem.
-- Patronen zonder snapshot-mechanisme lossen het inspringprobleem niet op: een
-  nieuwe consumer weet niet hoe hij de begintoestand opbouwt.
+- **Event-streams missen een 'cold start':** Via event streaming of webhooks
+  ontvangen consumers real-time updates over wijzigingen. Dit model faalt echter
+  bij de initiële opstart (_bootstrapping_): hoe bouwt een nieuwe consumer zijn
+  begintoestand op? Zacht-ontkoppelde patronen zonder snapshot-mechanisme
+  dwingen af dat alle historische events ooit afgespeeld moeten worden (event
+  sourcing). Dit hindert snelle opschaling, is vaak onpraktisch groot en schuurt
+  sterk met kaders inzake dataminimalisatie en de AVG.
+
+Kortom: er mist in standaard REST of pub/sub benaderingen een gestandaardiseerde
+methode die veilig grootschalige initiële opstart (_snapshots_) combineert met
+betrouwbare doorlopende incrementele verwerking (_delta's_).
 
 ## Garanties
 
@@ -197,10 +216,12 @@ GET /resources/snapshots/42?offset=200&limit=100  → {"id": 42, "items": [...]}
 …
 ```
 
-Omdat snapshots statisch zijn, treedt er geen page skew op. Na de laatste chunk
-stelt de consumer de cursor in op `42`. De provider houdt snapshots beschikbaar
-gedurende een vaste retentieperiode zodat consumers de tijd hebben om ze
-volledig te downloaden.
+Omdat snapshots statisch zijn, treedt er geen page skew op. De consumer laadt
+het nieuwe snapshot bij voorkeur in een aparte staging-area en schakelt pas over
+naar de nieuwe toestand — en verwijdert de vorige — als alle chunks succesvol
+zijn binnengekomen. Na de laatste chunk stelt de consumer de cursor in op `42`.
+De provider houdt snapshots beschikbaar gedurende een vaste retentieperiode
+zodat consumers de tijd hebben om ze volledig te downloaden.
 
 Snapshot-chunks zijn statische bestanden en kunnen potentieel groot zijn. Ze
 lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
@@ -224,7 +245,10 @@ GET /resources/deltas?after=42&limit=10
 ```
 
 De consumer past elke delta toe en zet de cursor naar het `id` van de laatste
-verwerkte delta. Een lege itemslijst betekent dat de consumer actueel is.
+verwerkte delta. Ontvangt de consumer onverhoopt een delta waarvan het `id` al
+gelijk is aan of ouder is dan de huidige cursor (bijvoorbeeld bij
+netwerk-retries), dan negeert de consumer deze (idempotentie). Een lege
+items-lijst betekent dat de consumer actueel is.
 
 Als de cursor niet meer bekend is bij de provider, antwoordt de provider met
 `410 Gone`:
@@ -257,7 +281,8 @@ data: {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
 ```
 
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
-huidige cursor; een mismatch signaleert een hiaat.
+huidige cursor. Een mismatch signaleert een hiaat: de consumer sluit de
+verbinding en behandelt dit identiek aan een `410 Gone`.
 
 Een open SSE-verbinding kan geen `410 Gone` ontvangen: de HTTP-statuscode ligt
 vast op `200 OK` zodra de verbinding is opgezet. Raakt de cursor verlopen
@@ -289,6 +314,10 @@ Last-Event-ID: 99
 De consumer haalt dan een nieuw snapshot op en opent daarna een nieuwe
 verbinding met de cursor van dat snapshot.
 
+Een robuuste consumer behandelt beide situaties — mismatch en `410 Gone` — als
+hetzelfde herstelpad: verbinding verbreken, nieuw snapshot ophalen, opnieuw
+verbinden met de cursor van dat snapshot.
+
 #### Webhooks
 
 De provider pusht delta's naar een endpoint van de consumer zodra ze beschikbaar
@@ -301,9 +330,13 @@ Content-Type: application/json
 {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
 ```
 
-De consumer valideert `prev_id` bij elk ontvangen bericht. Een mismatch
-signaleert dat de delta-keten is gereset of de cursor anderszins verlopen is; de
-consumer haalt dan een nieuw snapshot op via de snapshot-API.
+De consumer valideert `prev_id` bij elk ontvangen bericht. Omdat webhooks
+asynchroon zijn en berichten _out-of-order_ kunnen arriveren, signaleert een
+mismatch met de cursor in eerste instantie een _gap_ in de correcte volgorde.
+Een robuuste consumer buffert de onverwachte delta dan tijdelijk. Als de
+ontbrekende voorgaande delta niet binnen een redelijke termijn arriveert, neemt
+de consumer aan dat de delta-keten is gereset of de cursor verlopen is, en haalt
+een nieuw snapshot op via de snapshot-API.
 
 Bij polling en SSE initieert de consumer alle verbindingen, waardoor alleen
 eenzijdige authenticatie nodig is. Webhooks — waarbij de provider actief naar de
@@ -340,17 +373,21 @@ message: {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc",
 
 Geschikt wanneer consumer en provider ontkoppeld moeten zijn qua timing. De
 consumer beheert zelf de cursor in de broker. Het snapshot wordt doorgaans nog
-steeds via REST opgehaald. De consumer valideert ook hier `prev_id`; een
-mismatch is het signaal om een nieuw snapshot op te halen.
+steeds via REST opgehaald. De consumer valideert ook hier `prev_id`; net als bij
+webhooks kan een mismatch duiden op out-of-order aflevering of een
+daadwerkelijke breuk in de keten. Bij dat laatste is het het signaal om een
+nieuw snapshot op te halen.
 
 ## Implementatie-aandachtspunten
 
 ### Geen wijzigingen verliezen tijdens snapshotten
 
-Een cruciale verantwoordelijkheid van de provider is dat er geen wijzigingen
-verloren gaan die optreden terwijl een snapshot wordt verstuurd. Zorg dat de
-bron van delta's — bijvoorbeeld een transactionele outbox — niet wordt geleegd
-terwijl het snapshot nog actief is.
+Een cruciale verantwoordelijkheid van de provider is dat het downloaden van een
+groot snapshot door een consumer tijd in beslag neemt. Als een consumer hier
+lang over doet en pas daarna overschakelt op delta's, mogen de delta's die in de
+tussentijd zijn ontstaan niet al zijn opgeruimd. De theorie hier is dat de
+"retentietijd" van delta's de langst mogelijke download-tijd van een (groot)
+snapshot ruimschoots moet overlappen.
 
 ### Retentie van snapshots en delta's
 
