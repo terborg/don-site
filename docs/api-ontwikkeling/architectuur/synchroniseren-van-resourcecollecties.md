@@ -28,10 +28,10 @@ graph RL
 ```
 
 Een consumer kan op een recent moment inspringen — niet per se bij het begin.
-Omdat het patroon geen volledige historische replay vereist, is het ook geschikt
-voor resourcecollecties die persoonsgegevens kunnen bevatten: een volledige
-geschiedenis van wijzigingen is niet
-[AVG-conform](https://www.autoriteitpersoonsgegevens.nl/themas/basis-avg/privacyrechten-avg/recht-op-gegevens-verwijderen).
+Omdat het patroon geen volledige historische replay vereist, hoeft een provider
+ook geen onbeperkte wijzigingsgeschiedenis beschikbaar te houden. Dat past beter
+bij resourcecollecties met persoonsgegevens, waar dataminimalisatie en
+bewaartijd expliciete ontwerpkeuzes zijn.
 
 De provider kan op elk moment een nieuwe snapshot publiceren — na een
 datamigratie, schemawijziging, complete reset of nadat het recht op verwijderen
@@ -75,16 +75,20 @@ Dit patroon biedt de volgende garanties:
 - **[Snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation)**:
   het snapshot beschrijft de collectie zoals die bestond op één logisch moment,
   ongeacht wijzigingen daarna.
-- **Sterke consistentie**: dit patroon biedt
-  [sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency)
-  per collectie — alle consumers zien wijzigingen in dezelfde totale volgorde.
-  Wie twee collecties combineert — elk met eigen id's — heeft
-  [causale consistentie](https://en.wikipedia.org/wiki/Consistency_model#Causal_consistency)
-  tussen de streams: de volgorde binnen elke collectie is gegarandeerd, maar er
-  is geen totale volgorde over de twee streams heen.
+- **Deterministische volgorde per collectie**: de delta-keten definieert één
+  totale volgorde per collectie. Consumers die dezelfde snapshots en delta's in
+  die volgorde toepassen, eindigen daarom in dezelfde toestand. Wie twee
+  collecties combineert — elk met eigen id's — heeft geen totale volgorde over
+  beide stromen heen.
 - **Inhaalbaarheid en inspringen**: via de cursor kan een consumer op elk moment
   inspringen — zowel een nieuwe consumer die nog geen lokale toestand heeft als
   een consumer die na een onderbreking gemiste wijzigingen bijwerkt.
+
+Deze garanties volgen direct uit de mechaniek van het patroon. Een snapshot
+geeft een stabiel startpunt; daarna kan een consumer alleen verder als de
+volgende delta met `prev_id` exact aansluit op de huidige cursor. Zodra die
+aansluiting ontbreekt, is gecontroleerd herstel nodig: opnieuw beginnen vanaf
+een nieuw snapshot.
 
 Deze garanties hebben een prijs: een consumer loopt altijd enigszins achter op
 de werkelijkheid. Bij REST polling zit er een venster tussen het moment van een
@@ -103,12 +107,13 @@ Het patroon werkt met drie begrippen:
   startpunt voor een consumer die nog geen lokale toestand heeft. De
   begintoestand van het systeem is een snapshot (eventueel leeg) met een door de
   provider toegewezen initieel `id`.
-- **Delta**: een atomaire stap in de wijzigingsreeks — één of meer toevoegingen,
-  aanpassingen of verwijderingen die de provider als één geheel heeft
-  doorgevoerd. De consumer past een delta volledig toe of helemaal niet. Elke
-  delta heeft een `id` en een `prev_id`; een delta is toepasbaar als diens
-  `prev_id` overeenkomt met de cursor, waarna de cursor het `id` van de delta
-  wordt.
+- **Delta**: een atomaire stap in de wijzigingsreeks. Dit kan één enkele mutatie
+  op een resource zijn, of een groepering van in één transactie samengevoegde
+  mutaties. De consumer past een delta volledig toe of helemaal niet. Elke delta
+  heeft een `id` en een `prev_id`; een delta is toepasbaar als diens `prev_id`
+  overeenkomt met de cursor, waarna de cursor het `id` van de delta wordt. In de
+  verdere eenvoudige voorbeelden hieronder staat elke delta gelijk aan één
+  resourcewijziging.
 - **Cursor**: het `id` van de laatste verwerkte snapshot of delta, lokaal
   bijgehouden door de consumer. Een consumer zonder cursor heeft nog geen
   snapshot opgehaald.
@@ -229,6 +234,59 @@ ontlasten.
 
 ### Delta's ophalen
 
+#### Formaat van delta's
+
+Een delta is de concrete schakel tussen de garanties hierboven en de
+implementatie hieronder: de consumer kan alleen veilig doorschuiven als elke
+delta expliciet aangeeft op welke vorige toestand hij aansluit.
+
+```json
+{
+  "id": 57,
+  "prev_id": 42,
+  "operations": [
+    {
+      "type": "updated",
+      "resource_id": "item-abc",
+      "resource": {
+        "id": "item-abc",
+        "name": "Resource ABC - Gewijzigd",
+        "status": "actief"
+      }
+    }
+  ]
+}
+```
+
+Een delta bevat altijd een array van operaties (`operations`), ook als er maar
+één wijziging is. Zo kan de provider meerdere samenhangende mutaties in één keer
+laten toepassen.
+
+Elke operatie heeft minimaal een `type`:
+
+- `created`: een nieuwe resource is toegevoegd.
+- `updated`: een bestaande resource is gewijzigd of vervangen.
+- `deleted`: een resource is verwijderd; het `resource`-veld ontbreekt dan
+  bewust (tombstone).
+
+In de aanbevolen vorm bevat `resource` steeds de volledige resulterende weergave
+van het record (_Event-Carried State Transfer_). Dat is het meest robuust en
+sterk aanbevolen: de consumer hoeft geen vorige toestand op te halen om de
+wijziging te begrijpen, en retries blijven idempotent.
+
+Het veld `resource_id` staat bewust ook buiten het `resource`-object. Bij een
+`deleted`-operatie is dat noodzakelijk, omdat er dan geen `resource` meer is.
+Daarnaast kunnen consumers en tussenliggende brokers zo filteren en routeren op
+ID en type zonder eerst een zwaardere payload te deserialiseren.
+
+Alleen als resources extreem groot zijn en bandbreedte de doorslag geeft, kan de
+provider in plaats van de volledige resource ook een
+[JSON Merge Patch (RFC 7396)](https://datatracker.ietf.org/doc/html/rfc7396) of
+[JSON Patch (RFC 6902)](https://datatracker.ietf.org/doc/html/rfc6902)
+meesturen. Dat maakt de consumer-logica wel complexer, omdat patching pad- en
+schema-afhankelijk is en correct herstel na _out-of-order_ events lastiger
+wordt.
+
 #### Polling
 
 De consumer vraagt periodiek nieuwe delta's op via zijn cursor:
@@ -238,8 +296,27 @@ GET /resources/deltas?after=42&limit=10
 → 200 OK
   {
     "items": [
-      {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", "resource": {...}},
-      {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
+      {
+        "id": 57,
+        "prev_id": 42,
+        "operations": [
+          {
+            "type": "updated",
+            "resource_id": "item-abc",
+            "resource": { "id": "item-abc", "name": "Resource ABC - Gewijzigd", "status": "actief" }
+          }
+        ]
+      },
+      {
+        "id": 63,
+        "prev_id": 57,
+        "operations": [
+          {
+            "type": "deleted",
+            "resource_id": "item-xyz"
+          }
+        ]
+      }
     ]
   }
 ```
@@ -274,10 +351,10 @@ Last-Event-ID: 42
 → 200 OK (text/event-stream)
 
 id: 57
-data: {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
+data: {"id": 57, "prev_id": 42, "operations": [{"type": "updated", "resource_id": "item-abc", ...}]}
 
 id: 63
-data: {"id": 63, "prev_id": 57, "type": "deleted", "resource_id": "item-xyz"}
+data: {"id": 63, "prev_id": 57, "operations": [{"type": "deleted", "resource_id": "item-xyz"}]}
 ```
 
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
@@ -327,7 +404,20 @@ zijn:
 POST https://consumer.example.nl/webhook/resources
 Content-Type: application/json
 
-{"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
+{
+  "id": 57,
+  "prev_id": 42,
+  "operations": [
+    {
+      "type": "updated",
+      "resource_id": "item-abc",
+      "resource": {
+        "id": "item-abc",
+        "name": "Resource ABC - Gewijzigd"
+      }
+    }
+  ]
+}
 ```
 
 De consumer valideert `prev_id` bij elk ontvangen bericht. Omdat webhooks
@@ -354,7 +444,17 @@ verpakt, ongeacht het transportmechanisme (HTTP, SSE, broker):
   "type": "nl.example.resources.updated",
   "source": "/resources",
   "id": "57",
-  "data": {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
+  "data": {
+    "id": 57,
+    "prev_id": 42,
+    "operations": [
+      {
+        "type": "updated",
+        "resource_id": "item-abc",
+        "resource": {...}
+      }
+    ]
+  }
 }
 ```
 
@@ -366,28 +466,38 @@ ongewijzigd.
 De provider publiceert delta's op een topic; de consumer verwerkt ze op eigen
 tempo:
 
-```
+```text
 topic: nl.example.resources.changes
-message: {"id": 57, "prev_id": 42, "type": "updated", "resource_id": "item-abc", ...}
+message: {"id": 57, "prev_id": 42, "operations": [{"type": "updated", "resource_id": "item-abc", ...}]}
 ```
 
 Geschikt wanneer consumer en provider ontkoppeld moeten zijn qua timing. De
 consumer beheert zelf de cursor in de broker. Het snapshot wordt doorgaans nog
 steeds via REST opgehaald. De consumer valideert ook hier `prev_id`; net als bij
-webhooks kan een mismatch duiden op out-of-order aflevering of een
-daadwerkelijke breuk in de keten. Bij dat laatste is het het signaal om een
+webhooks kan een mismatch duiden op _out-of-order_ aflevering of een
+daadwerkelijke breuk in de keten. In dat laatste geval is het signaal om een
 nieuw snapshot op te halen.
 
 ## Implementatie-aandachtspunten
 
+### Gegarandeerde atomiciteit (Transactionele Outbox)
+
+Om operaties op de juiste manier te groeperen als provider zonder
+dataconsistentie te verliezen, kan het beste het
+[Transactionele outbox](https://microservices.io/patterns/data/transactional-outbox.html)-patroon
+worden gebruikt. Daarbij worden de databasewijzigingen aan de resource(s) én de
+logvermelding met de _operations_-array als één database-transactie opgeslagen.
+Een asynchrone worker leest vervolgens de outbox-tabel uit en deelt deze als
+gegarandeerd correcte berichten via polling, webhooks of de message broker.
+
 ### Geen wijzigingen verliezen tijdens snapshotten
 
-Een cruciale verantwoordelijkheid van de provider is dat het downloaden van een
-groot snapshot door een consumer tijd in beslag neemt. Als een consumer hier
-lang over doet en pas daarna overschakelt op delta's, mogen de delta's die in de
-tussentijd zijn ontstaan niet al zijn opgeruimd. De theorie hier is dat de
-"retentietijd" van delta's de langst mogelijke download-tijd van een (groot)
-snapshot ruimschoots moet overlappen.
+Een cruciale verantwoordelijkheid van de provider is de overlap tussen
+snapshot-retentie en delta-retentie. Het downloaden van een groot snapshot kost
+tijd. Als een consumer pas daarna overschakelt op delta's, mogen de delta's die
+in de tussentijd zijn ontstaan niet al zijn opgeruimd. De retentie van delta's
+moet daarom ruimschoots langer zijn dan de langst plausibele download- en
+verwerkingstijd van een snapshot.
 
 ### Retentie van snapshots en delta's
 
