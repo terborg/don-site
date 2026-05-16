@@ -8,49 +8,10 @@ tags:
 
 # Synchroniseren van resourcecollecties
 
-## Het probleem
-
 In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
 lokale kopie (een _mirror_ of _read model_) van een resourcecollectie. Dit stelt
 hen in staat om data snel te bevragen, lokaal te verrijken of te koppelen, en
-autonomer te opereren. Zelfs bij middelgrote datasets of frequente updates lopen
-bestaande synchronisatie-benaderingen echter tegen technische grenzen aan:
-
-- **Periodiek compleet ophalen schaalt niet:** Vanaf een relatief bescheiden
-  omvang (bijvoorbeeld tienduizenden records) is het periodiek inlezen van de
-  volledige set onwerkbaar. Het resulteert in onnodig netwerkverkeer, langdurige
-  verwerkingstijden en onnodige druk op de systemen van de provider.
-- **Gepagineerde `GET`s zijn inconsistent onder verandering ('page skew'):**
-  Vraagt een consumer de data in stukjes op en muteert de collectie in de
-  tussentijd, dan verschuiven de records over de paginagrenzen. Tijdens dit
-  proces kunnen items ongemerkt worden overgeslagen of dubbel worden ingelezen.
-  Zie
-  [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md)
-  voor een uitleg van dit probleem.
-- **Event-streams leunen op een onvergankelijke geschiedenis:** Via event
-  streaming of webhooks ontvangen consumers real-time updates. Om echter als
-  nieuwe consumer een begintoestand op te bouwen (_bootstrapping_), vereist de
-  puurste vorm van dit patroon (event sourcing) dat de **provider** de volledige
-  stroom van alle historische mutaties ooit bewaart en ontsluit. Deze event-log
-  is vaak heilig en onveranderlijk (_append-only_). Dit vormt een gigantische
-  datalast voor de provider, is traag voor de consumer, en schuurt fundamenteel
-  met de AVG (verwijderen is complex of onmogelijk). Bovendien is event sourcing
-  nauwelijks toe te voegen aan bestaande landschappen: traditionele (standaard)
-  databases bewaren enkel de huidige toestand. Het ontbreken van historische
-  mutaties maakt achteraf overstappen naar een event-log een onmogelijkheid
-  zonder ingrijpende herbouw.
-
-Kortom: er mist in standaard REST of pub/sub benaderingen een gestandaardiseerde
-methode die een veilige, schaalbare initiële opstart (_snapshots_) combineert
-met betrouwbare doorlopende incrementele verwerking (_delta's_).
-
-## De oplossing: het snapshots-en-delta's-patroon
-
-Dit artikel beschrijft het **snapshots-en-delta's**-patroon waarmee een consumer
-synchroon kan lopen met een continu veranderende resourcecollectie van
-arbitraire grootte. Het patroon is transport-agnostisch: het werkt over HTTP
-(polling of SSE) of via een message broker. Over HTTP kan het een extensie zijn
-van een bestaande API — zonder extra modules of diensten.
+autonomer te opereren.
 
 ```mermaid
 graph RL
@@ -64,6 +25,47 @@ graph RL
   rc --"`Synchronisatie
         (HTTP)`"--> mirror
 ```
+
+Zelfs bij middelgrote datasets of frequente updates lopen bestaande
+synchronisatie-benaderingen echter tegen technische grenzen aan:
+
+- **Periodiek compleet ophalen schaalt niet:** Vanaf een relatief bescheiden
+  omvang (bijvoorbeeld tienduizenden records) is het periodiek inlezen van de
+  volledige set onwerkbaar. Het resulteert in onnodig netwerkverkeer, langdurige
+  verwerkingstijden en onnodige druk op de systemen van de provider.
+- **Gepagineerde `GET`s zijn inconsistent onder verandering ('page skew'):**
+  Vraagt een consumer de data in stukjes op en muteert de collectie in de
+  tussentijd, dan verschuiven de records over de paginagrenzen. Tijdens dit
+  proces kunnen items ongemerkt worden overgeslagen of dubbel worden ingelezen.
+  Zie
+  [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md)
+  voor een uitleg van dit probleem.
+- **Een puur event-driven aanpak vereist volledige historie:** Zonder
+  snapshot-mechanisme moet een nieuwe consumer alle historische delta's afspelen
+  om een begintoestand op te bouwen (_bootstrapping_). Dit vereist dat de
+  provider de volledige event-log permanent bewaart. Naarmate het systeem ouder
+  wordt, neemt de bootstrap-tijd evenredig toe. Event sourcing kent een
+  snapshot-techniek om lange replay-ketens te versnellen, maar daarmee verdwijnt
+  de bewaarlast voor de provider niet: om nieuwe consumers later nog te kunnen
+  laten instappen, moet de onderliggende wijzigingshistorie beschikbaar blijven.
+  Dat botst met situaties waarin gegevens juist uit de historie moeten
+  verdwijnen, bijvoorbeeld na een beroep op het
+  [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden).
+  Het verwijderen van zo'n historisch record maakt de replay-keten immers
+  onvolledig.
+
+Deze beperkingen laten zien dat het synchroniseren van een resourcecollectie
+meer vraagt dan alleen paginering of een stroom van wijzigingen. Een consumer
+moet zowel een consistente toestand kunnen overnemen als daarna incrementeel
+kunnen bijwerken.
+
+## Het snapshots-en-delta's-patroon
+
+Het **snapshots-en-delta's**-patroon combineert een eenmalige volledige
+momentopname (_snapshot_) met een doorlopende stroom van incrementele
+wijzigingen (_delta's_). Het is transport-agnostisch: het werkt over HTTP
+(polling of SSE) of via een message broker. Over HTTP kan het een extensie zijn
+van een bestaande API — zonder extra modules of diensten.
 
 Een consumer kan op een recent moment inspringen — niet per se bij het begin.
 Omdat het patroon geen volledige historische replay vereist, hoeft een provider
