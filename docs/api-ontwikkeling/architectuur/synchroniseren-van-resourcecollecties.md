@@ -8,6 +8,44 @@ tags:
 
 # Synchroniseren van resourcecollecties
 
+## Het probleem
+
+In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
+lokale kopie (een _mirror_ of _read model_) van een resourcecollectie. Dit stelt
+hen in staat om data snel te bevragen, lokaal te verrijken of te koppelen, en
+autonomer te opereren. Zelfs bij middelgrote datasets of frequente updates lopen
+bestaande synchronisatie-benaderingen echter tegen technische grenzen aan:
+
+- **Periodiek compleet ophalen schaalt niet:** Vanaf een relatief bescheiden
+  omvang (bijvoorbeeld tienduizenden records) is het periodiek inlezen van de
+  volledige set onwerkbaar. Het resulteert in onnodig netwerkverkeer, langdurige
+  verwerkingstijden en onnodige druk op de systemen van de provider.
+- **Gepagineerde `GET`s zijn inconsistent onder verandering ('page skew'):**
+  Vraagt een consumer de data in stukjes op en muteert de collectie in de
+  tussentijd, dan verschuiven de records over de paginagrenzen. Tijdens dit
+  proces kunnen items ongemerkt worden overgeslagen of dubbel worden ingelezen.
+  Zie
+  [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md)
+  voor een uitleg van dit probleem.
+- **Event-streams leunen op een onvergankelijke geschiedenis:** Via event
+  streaming of webhooks ontvangen consumers real-time updates. Om echter als
+  nieuwe consumer een begintoestand op te bouwen (_bootstrapping_), vereist de
+  puurste vorm van dit patroon (event sourcing) dat de **provider** de volledige
+  stroom van alle historische mutaties ooit bewaart en ontsluit. Deze event-log
+  is vaak heilig en onveranderlijk (_append-only_). Dit vormt een gigantische
+  datalast voor de provider, is traag voor de consumer, en schuurt fundamenteel
+  met de AVG (verwijderen is complex of onmogelijk). Bovendien is event sourcing
+  nauwelijks toe te voegen aan bestaande landschappen: traditionele (standaard)
+  databases bewaren enkel de huidige toestand. Het ontbreken van historische
+  mutaties maakt achteraf overstappen naar een event-log een onmogelijkheid
+  zonder ingrijpende herbouw.
+
+Kortom: er mist in standaard REST of pub/sub benaderingen een gestandaardiseerde
+methode die een veilige, schaalbare initiële opstart (_snapshots_) combineert
+met betrouwbare doorlopende incrementele verwerking (_delta's_).
+
+## De oplossing: het snapshots-en-delta's-patroon
+
 Dit artikel beschrijft het **snapshots-en-delta's**-patroon waarmee een consumer
 synchroon kan lopen met een continu veranderende resourcecollectie van
 arbitraire grootte. Het patroon is transport-agnostisch: het werkt over HTTP
@@ -39,35 +77,30 @@ reset of nadat het recht op verwijderen is toegepast. Consumers ontdekken dit
 vanzelf via het protocol en synchroniseren opnieuw zonder dat de provider ze
 actief hoeft te notificeren.
 
-## Het probleem
+Aan de basis van het patroon ligt het concept van een **toestand** (_state_ of
+_momentopname_). Een resourcecollectie doorloopt in de tijd een keten van
+achtereenvolgende toestanden. Elke toestand (de dataset op exact dat moment)
+heeft een uniek **state-id**—dit kan een oplopend transactienummer, tijdstempel,
+UUID of hash zijn. De provider bepaalt de exacte vorm, zolang elk state-id
+binnen een collectie maar altijd uniek is.
 
-In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
-lokale kopie (een _mirror_ of _read model_) van een resourcecollectie. Dit stelt
-hen in staat om data snel te bevragen, lokaal te verrijken of te koppelen, en
-autonomer te opereren. Zodra de dataset echter groot is en de updates frequent
-zijn, lopen bestaande synchronisatie-benaderingen tegen technische grenzen aan:
+Het patroon modelleert de overdracht van de toestand of overgangen via twee
+structuren:
 
-- **Naïef periodiek ophalen schaalt niet:** Bij grote collecties (bijvoorbeeld
-  honderdduizenden records) is het periodiek inlezen van de volledige set
-  onwerkbaar. Het resulteert in onnodig netwerkverkeer, langdurige
-  verwerkingstijden en onnodige druk op de systemen van de provider.
-- **Gepagineerde `GET`s lijden onder 'page skew':** Vraagt een consumer de data
-  in stukjes op en muteert de collectie in de tussentijd, dan verschuiven de
-  records over de paginagrenzen. Tijdens dit proces kunnen items ongemerkt
-  worden overgeslagen of dubbel worden ingelezen. Zie
-  [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md)
-  voor een uitleg van dit probleem.
-- **Event-streams missen een 'cold start':** Via event streaming of webhooks
-  ontvangen consumers real-time updates over wijzigingen. Dit model faalt echter
-  bij de initiële opstart (_bootstrapping_): hoe bouwt een nieuwe consumer zijn
-  begintoestand op? Zacht-ontkoppelde patronen zonder snapshot-mechanisme
-  dwingen af dat alle historische events ooit afgespeeld moeten worden (event
-  sourcing). Dit hindert snelle opschaling, is vaak onpraktisch groot en schuurt
-  sterk met kaders inzake dataminimalisatie en de AVG.
+- **Snapshot**: de representatie van de collectie in zo'n specifieke toestand.
+  Een snapshot is onlosmakelijk gekoppeld aan één `state-id`. De (al dan niet
+  lege) begintoestand van het systeem is een initieel snapshot.
+- **Delta**: de wijziging van een toestand naar de opvolgende toestand. Een
+  delta specificeert expliciet het vertrekpunt (`prev_id`) én het nieuwe
+  bestemmingspunt (`id`, de nieuwe toestand die dankzij deze delta ontstaat).
+  Een delta kan één of meerdere `operations` omvatten; die moeten als één
+  atomair geheel verwerkt worden.
 
-Kortom: er mist in standaard REST of pub/sub benaderingen een gestandaardiseerde
-methode die veilig grootschalige initiële opstart (_snapshots_) combineert met
-betrouwbare doorlopende incrementele verwerking (_delta's_).
+Een consumer 'surft' langs de toestanden. Hij bouwt initieel op met een snapshot
+(en kent dan het bijbehorende `state-id`). Daarna volgt hij de keten door te
+controleren of een binnengekomen delta start bij zijn huidige toestand
+(`prev_id` gelijk aan de eigen `state-id`), waarna zijn lokale `state-id`
+doorschuift naar het `id` van de net verwerkte delta.
 
 ## Garanties
 
@@ -81,13 +114,13 @@ Dit patroon biedt de volgende garanties:
   die volgorde toepassen, eindigen daarom in dezelfde toestand. Wie twee
   collecties combineert — elk met eigen id's — heeft geen totale volgorde over
   beide stromen heen.
-- **Inhaalbaarheid en inspringen**: via de cursor kan een consumer op elk moment
-  inspringen — zowel een nieuwe consumer die nog geen lokale toestand heeft als
-  een consumer die na een onderbreking gemiste wijzigingen bijwerkt.
+- **Inhaalbaarheid en inspringen**: via het state-id kan een consumer op elk
+  moment inspringen — zowel een nieuwe consumer die nog geen lokale toestand
+  heeft als een consumer die na een onderbreking gemiste wijzigingen bijwerkt.
 
 Deze garanties volgen direct uit de mechaniek van het patroon. Een snapshot
 geeft een stabiel startpunt; daarna kan een consumer alleen verder als de
-volgende delta met `prev_id` exact aansluit op de huidige cursor. Zodra die
+volgende delta met `prev_id` exact aansluit op het huidige state-id. Zodra die
 aansluiting ontbreekt, is gecontroleerd herstel nodig: opnieuw beginnen vanaf
 een nieuw snapshot.
 
@@ -98,55 +131,64 @@ latentie kleiner, maar nooit nul. De toestand die een consumer ziet is altijd
 intern consistent — ze beschrijft een werkelijke vroegere toestand van de
 collectie — maar ze kan verouderd zijn.
 
-## Het patroon
-
-Het patroon werkt met drie begrippen:
-
-- **Snapshot**: een consistente momentopname van de volledige resourcecollectie
-  op één moment. Een snapshot heeft een uniek `id` — dit kan een getal, een
-  tijdstempel of een hash zijn; de provider bepaalt de vorm. Een snapshot is het
-  startpunt voor een consumer die nog geen lokale toestand heeft. De
-  begintoestand van het systeem is een snapshot (eventueel leeg) met een door de
-  provider toegewezen initieel `id`.
-- **Delta**: een atomaire stap in de wijzigingsreeks. Dit kan één enkele mutatie
-  op een resource zijn, of een groepering van in één transactie samengevoegde
-  mutaties. De consumer past een delta volledig toe of helemaal niet. Elke delta
-  heeft een `id` en een `prev_id` — in hetzelfde formaat als snapshot-IDs, want
-  snapshots en delta's delen één ID-ruimte. De `prev_id` van de allereerste
-  delta verwijst naar het `id` van het initiële snapshot. Een delta is
-  toepasbaar als diens `prev_id` overeenkomt met de cursor, waarna de cursor het
-  `id` van de delta wordt. In de verdere eenvoudige voorbeelden hieronder staat
-  elke delta gelijk aan één resourcewijziging.
-- **Cursor**: het `id` van de laatste verwerkte snapshot of delta, lokaal
-  bijgehouden door de consumer. Een consumer zonder cursor heeft nog geen
-  snapshot opgehaald.
-
 ### Consumer
 
-De consumer doorloopt continu een cursorcheck die bepaalt wat de volgende stap
-is:
+#### Intern datamodel
+
+Een consumer houdt minimaal twee dingen bij:
+
+- **`state-id`** — het `id` van de laatste verwerkte snapshot of delta. Is er
+  nog geen snapshot geladen, dan is het state-id afwezig.
+- **`mirror`** — de lokale kopie van de resourcecollectie, opgebouwd uit het
+  snapshot en de daarna toegepaste delta's.
+
+Bij webhooks en broker is optioneel een derde nodig:
+
+- **`buffer`** — tijdelijke opslag voor delta's die arriveren vóór hun
+  voorganger, omdat berichten _out-of-order_ kunnen aankomen.
+
+#### Signalen
+
+Afhankelijk van het transport ontvangt een consumer de volgende signalen:
+
+| Signaal             | Transport                     | Betekenis                                                    |
+| ------------------- | ----------------------------- | ------------------------------------------------------------ |
+| Snapshot-lijst      | HTTP                          | Beschikbare snapshots; consumer kiest op `created_at`        |
+| Snapshot-chunk      | HTTP                          | Pagina van snapshot-inhoud; samen vormen ze de begintoestand |
+| Delta               | polling, SSE, webhook, broker | Wijziging om toe te passen; valideer eerst `prev_id`         |
+| `410 Gone`          | polling, SSE-herverbinding    | State-id onbekend of verlopen → nieuw snapshot vereist       |
+| Verbinding gesloten | SSE                           | Herverbinden; bij onbekend state-id volgt `410 Gone`         |
+| `prev_id`-mismatch  | webhook, broker, SSE          | Hiaat of reset → state-id ongeldig → nieuw snapshot vereist  |
+| Lege delta-lijst    | polling                       | Consumer is actueel; wachten op volgende poll                |
+
+#### Toestandsmachine
+
+Door het verwerken van de reguliere delta's als de hoofdcyclus te zien (en niet
+als een uitzondering), ontstaat een eenvoudige toestandsmachine. De consumer
+bevindt zich in de basis in de toestand **Volgen**:
 
 ```mermaid
-flowchart TD
-    Start((●)) --> C{Cursorcheck}
+stateDiagram-v2
+    [*] --> Herstellen: Geen state-id aanwezig
 
-    C -->|Delta<br>beschikbaar| A[Delta toepassen]
-    A --> C
+    Herstellen --> Volgen: Snapshot geladen
 
-    C -->|Geen geldige<br>cursor| S[Snapshot laden]
-    S --> C
+    Volgen --> Volgen: Delta toegepast
+    Volgen --> Wachten: Actueel (geen nieuwe delta)
+    Wachten --> Volgen: Nieuwe delta
 
-    C -->|Geen nieuwere<br>delta| U[Up-to-date]
-    U -->|Nieuwere delta<br>ontvangen| C
+    Volgen --> Herstellen: 410 Gone of hiaat
 ```
 
-- **Delta toepassen**: er is een delta beschikbaar voor de cursor. De consumer
-  past de delta toe en schuift de cursor op.
-- **Snapshot laden**: de consumer heeft geen geldige cursor — bij het eerste
-  gebruik, na een `410 Gone`, of na een `prev_id`-mismatch. De consumer haalt
-  een nieuw snapshot op om in te springen.
-- **Up-to-date**: er zijn geen nieuwere delta's. De consumer wacht op de
-  volgende delta (via SSE of polling).
+- **Herstellen (Snapshot laden)**: het state-id ontbreekt (eerste start), is
+  verlopen (`410 Gone`) of sluit niet aan (`prev_id`-mismatch). De consumer
+  haalt een nieuw snapshot op en stelt het state-id in op het id daarvan.
+- **Volgen ↔ Wachten**: de consumer past delta's toe en schuift het state-id
+  steeds op. Zijn er geen nieuwe delta's, dan wacht de consumer (via SSE of
+  polling) tot er een binnenkomt.
+- **Volgen → Herstellen**: de provider of de data signaleert dat het state-id
+  niet meer geldig is. De consumer wijkt af van de "happy flow" en herstart
+  vanuit een nieuw snapshot.
 
 ### Provider
 
@@ -176,13 +218,13 @@ flowchart TD
   broker via een `prev_id`-mismatch in de volgende ontvangen delta.
 - **Verouderde data opruimen**: na het verstrijken van de retentieperiode
   verwijdert de provider snapshots en delta's. Bij polling en SSE-herverbinding
-  ontvangen consumers met een verlopen cursor `410 Gone`; bij webhooks en broker
-  signaleert een `prev_id`-mismatch dat de cursor verlopen is.
+  ontvangen consumers met een verlopen state-id `410 Gone`; bij webhooks en
+  broker signaleert een `prev_id`-mismatch dat het state-id verlopen is.
 
 ## REST API
 
 De onderstaande invulling is een aanbeveling. Het patroon zelf — snapshot,
-delta, cursor — is leidend; de URL-structuur en veldnamen zijn niet verplicht.
+delta, state-id — is leidend; de URL-structuur en veldnamen zijn niet verplicht.
 Wie de aanbeveling volgt, maakt zijn API direct bruikbaar voor consumers die het
 patroon kennen.
 
@@ -227,12 +269,12 @@ GET /resources/snapshots/42?offset=200&limit=100  → {"id": 42, "total": 850, "
 Omdat snapshots statisch zijn, treedt er geen page skew op. De consumer laadt
 het nieuwe snapshot bij voorkeur in een aparte staging-area en schakelt pas over
 naar de nieuwe toestand — en verwijdert de vorige — als alle chunks succesvol
-zijn binnengekomen. Na de laatste chunk stelt de consumer de cursor in op `42`.
-De provider houdt snapshots beschikbaar gedurende een vaste retentieperiode
-zodat consumers de tijd hebben om ze volledig te downloaden. Verloopt een
-snapshot voordat de download is voltooid — kenbaar via `410 Gone` op een latere
-chunk — dan herhaalt de consumer het proces met het meest recente beschikbare
-snapshot.
+zijn binnengekomen. Na de laatste chunk stelt de consumer het state-id in op
+`42`. De provider houdt snapshots beschikbaar gedurende een vaste
+retentieperiode zodat consumers de tijd hebben om ze volledig te downloaden.
+Verloopt een snapshot voordat de download is voltooid — kenbaar via `410 Gone`
+op een latere chunk — dan herhaalt de consumer het proces met het meest recente
+beschikbare snapshot.
 
 Snapshot-chunks zijn statische bestanden en kunnen potentieel groot zijn. Ze
 lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
@@ -295,7 +337,7 @@ wordt.
 
 #### Polling
 
-De consumer vraagt periodiek nieuwe delta's op via zijn cursor:
+De consumer vraagt periodiek nieuwe delta's op via zijn state-id:
 
 ```http
 GET /resources/deltas?after=42&limit=10
@@ -317,13 +359,13 @@ GET /resources/deltas?after=42&limit=10
   }
 ```
 
-De consumer past elke delta toe en zet de cursor naar het `id` van de laatste
+De consumer past elke delta toe en zet het state-id naar het `id` van de laatste
 verwerkte delta. Ontvangt de consumer onverhoopt een delta waarvan het `id` al
-gelijk is aan of ouder is dan de huidige cursor (bijvoorbeeld bij
+gelijk is aan of ouder is dan het huidige state-id (bijvoorbeeld bij
 netwerk-retries), dan negeert de consumer deze (idempotentie). Een lege
 items-lijst betekent dat de consumer actueel is.
 
-Als de cursor niet meer bekend is bij de provider, antwoordt de provider met
+Als het state-id niet meer bekend is bij de provider, antwoordt de provider met
 `410 Gone`:
 
 ```http
@@ -336,8 +378,8 @@ De consumer weet dan dat hij opnieuw een snapshot moet ophalen.
 #### Streaming (SSE)
 
 De consumer opent een langdurige verbinding; de provider pusht delta's zodra ze
-beschikbaar zijn. De consumer stuurt `Last-Event-ID` mee als cursor — zowel bij
-de initiële verbinding als bij herverbinding na een onderbreking:
+beschikbaar zijn. De consumer stuurt `Last-Event-ID` mee als state-id — zowel
+bij de initiële verbinding als bij herverbinding na een onderbreking:
 
 ```http
 GET /resources/deltas
@@ -353,12 +395,12 @@ id: 63
 data: {"id": 63, "prev_id": 57, "operations": [{"type": "deleted", "resource_id": "item-xyz"}]}
 ```
 
-De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met de
-huidige cursor. Een mismatch signaleert een hiaat: de consumer sluit de
+De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met het
+huidige state-id. Een mismatch signaleert een hiaat: de consumer sluit de
 verbinding en behandelt dit identiek aan een `410 Gone`.
 
 Een open SSE-verbinding kan geen `410 Gone` ontvangen: de HTTP-statuscode ligt
-vast op `200 OK` zodra de verbinding is opgezet. Raakt de cursor verlopen
+vast op `200 OK` zodra de verbinding is opgezet. Raakt het state-id verlopen
 terwijl de verbinding open staat, dan sluit de provider de verbinding:
 
 ```http
@@ -368,7 +410,7 @@ data: {"id": 57, "prev_id": 42, ...}
 ← verbinding gesloten door provider
 ```
 
-Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; als die cursor
+Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; als dat state-id
 inmiddels niet meer bekend is, antwoordt de provider met `410 Gone`:
 
 ```http
@@ -379,11 +421,11 @@ Last-Event-ID: 99
 ```
 
 De consumer haalt dan een nieuw snapshot op en opent daarna een nieuwe
-verbinding met de cursor van dat snapshot.
+verbinding met het state-id van dat snapshot.
 
 Een robuuste consumer behandelt beide situaties — mismatch en `410 Gone` — als
 hetzelfde herstelpad: verbinding verbreken, nieuw snapshot ophalen, opnieuw
-verbinden met de cursor van dat snapshot.
+verbinden met het state-id van dat snapshot.
 
 #### Webhooks
 
@@ -412,11 +454,11 @@ Content-Type: application/json
 
 De consumer valideert `prev_id` bij elk ontvangen bericht. Omdat webhooks
 asynchroon zijn en berichten _out-of-order_ kunnen arriveren, signaleert een
-mismatch met de cursor in eerste instantie een _gap_ in de correcte volgorde.
+mismatch met het state-id in eerste instantie een _gap_ in de correcte volgorde.
 Een robuuste consumer buffert de onverwachte delta dan tijdelijk. Als de
 ontbrekende voorgaande delta niet binnen een redelijke termijn arriveert, neemt
-de consumer aan dat de delta-keten is gereset of de cursor verlopen is, en haalt
-een nieuw snapshot op via de snapshot-API.
+de consumer aan dat de delta-keten is gereset of het state-id verlopen is, en
+haalt een nieuw snapshot op via de snapshot-API.
 
 Bij polling en SSE initieert de consumer alle verbindingen, waardoor alleen
 eenzijdige authenticatie nodig is. Webhooks — waarbij de provider actief naar de
@@ -467,9 +509,9 @@ message: {"id": 57, "prev_id": 42, "operations": [{"type": "updated", "resource_
 ```
 
 Geschikt wanneer consumer en provider ontkoppeld moeten zijn qua timing. De
-consumer beheert zelf de cursor in de broker. Het snapshot wordt doorgaans nog
-steeds via REST opgehaald. De consumer valideert ook hier `prev_id`; net als bij
-webhooks kan een mismatch duiden op _out-of-order_ aflevering of een
+consumer beheert zelf het state-id in de broker. Het snapshot wordt doorgaans
+nog steeds via REST opgehaald. De consumer valideert ook hier `prev_id`; net als
+bij webhooks kan een mismatch duiden op _out-of-order_ aflevering of een
 daadwerkelijke breuk in de keten. In dat laatste geval is het signaal om een
 nieuw snapshot op te halen.
 
@@ -500,8 +542,8 @@ De provider moet snapshots en delta's beschikbaar houden voor een
 retentieperiode die groot genoeg is voor een consumer om ze te verwerken. Daarna
 mag de provider ze verwijderen. Bij polling en SSE-herverbinding ontvangt de
 consumer dan `410 Gone`; bij webhooks en broker detecteert de consumer een
-`prev_id`-mismatch. In beide gevallen is de cursor verlopen en moet opnieuw een
-snapshot worden opgehaald.
+`prev_id`-mismatch. In beide gevallen is het state-id verlopen en moet opnieuw
+een snapshot worden opgehaald.
 
 ### Geen volledige geschiedenis
 
