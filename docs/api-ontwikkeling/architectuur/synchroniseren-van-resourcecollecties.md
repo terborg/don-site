@@ -61,11 +61,21 @@ kunnen bijwerken.
 
 ## Het snapshots-en-delta's-patroon
 
-Het **snapshots-en-delta's**-patroon combineert een eenmalige volledige
-momentopname (_snapshot_) met een doorlopende stroom van incrementele
-wijzigingen (_delta's_). Het is transport-agnostisch: het werkt over HTTP
-(polling of SSE) of via een message broker. Over HTTP kan het een extensie zijn
-van een bestaande API — zonder extra modules of diensten.
+Het **snapshots-en-delta's**-patroon werkt in de kern met twee parallelle
+stromen die elkaar aanvullen:
+
+1. **Snapshots (laagfrequent):** Een stroom van volledige momentopnames van de
+   collectie. Deze grote, consistente weergaves op één specifiek moment zijn
+   ideaal voor nieuwe consumers (bootstrapping) of na verlies van lokale status
+   (herstel).
+2. **Delta's (hoogfrequent):** Een continue stroom van incrementele wijzigingen.
+   Deze kleine updates bevatten de individuele mutaties (aanmaken, wijzigen,
+   verwijderen) die de collectie van de ene naar de andere toestand brengen.
+
+Samen vormen zij het synchronisatiemechanisme. Het patroon is
+transport-agnostisch: het werkt over HTTP (polling of SSE) of via een message
+broker. Over HTTP kan het bovendien een extensie zijn van een bestaande API —
+zonder extra modules of diensten.
 
 Een consumer kan op een recent moment inspringen — niet per se bij het begin.
 Omdat het patroon geen volledige historische replay vereist, hoeft een provider
@@ -85,6 +95,19 @@ achtereenvolgende toestanden. Elke toestand (de dataset op exact dat moment)
 heeft een uniek **state-id**—dit kan een oplopend transactienummer, tijdstempel,
 UUID of hash zijn. De provider bepaalt de exacte vorm, zolang elk state-id
 binnen een collectie maar altijd uniek is.
+
+> **Relatie met ETag**  
+> Een `ETag` kan bij een HTTP-implementatie een bruikbare representatie zijn van
+> een `state-id`, maar is geen algemene vervanging ervan. Een `ETag` hoort bij
+> een specifieke HTTP-representatie; het `state-id` identificeert de logische
+> toestand van de collectie, ook buiten HTTP, bijvoorbeeld bij SSE, webhooks of
+> een message broker. Geeft een collectie-endpoint één canonieke representatie
+> van de actuele toestand terug, dan kan de provider het bijbehorende `state-id`
+> als sterke `ETag` meesturen. Die koppeling is alleen betrouwbaar binnen die
+> representatie; zodra dezelfde collectie via meerdere representaties of
+> projecties beschikbaar is, is aanvullende afbakening nodig. Zie ook
+> [Veilige gelijktijdigheid met optimistic locking](./gelijktijdigheid-met-optimistic-locking.md)
+> voor het gebruik van `ETag` bij conditionele requests.
 
 Het patroon modelleert de overdracht van de toestand of overgangen via twee
 structuren:
@@ -228,18 +251,35 @@ flowchart TD
 De onderstaande invulling is een aanbeveling. Het patroon zelf — snapshot,
 delta, state-id — is leidend; de URL-structuur en veldnamen zijn niet verplicht.
 Wie de aanbeveling volgt, maakt zijn API direct bruikbaar voor consumers die het
-patroon kennen.
+patroon kennen en respecteert hierin zoveel mogelijk de HTTP-standaarden.
 
 Het patroon voegt twee sub-resources toe aan een (eventueel bestaande)
 collectie:
 
 ```text
-GET /resources/             → de collectie zelf (ongewijzigd)
+GET /resources/             → de collectie zelf (ongewijzigd, met ETag-header)
 GET /resources/snapshots/   → lijst van beschikbare snapshots
 GET /resources/snapshots/42 → inhoud van snapshot 42 (offset + limit)
 GET /resources/deltas/      → stroom van delta's (polling of SSE);
                               geen individuele delta's
 ```
+
+### Reguliere collectie-endpoints en ETag
+
+Wanneer een regulier collectie-endpoint (`GET /resources/`) één canonieke
+representatie van de actuele toestand teruggeeft, is het een _good practice_ om
+die toestand ook via een sterke HTTP `ETag`-header te ontsluiten:
+
+```http
+GET /resources/
+→ 200 OK
+  ETag: "57"
+```
+
+Consumers weten hiermee direct wat de allernieuwste `state-id` van de collectie
+is, zonder dat ze per se de structuur voor grootschalige synchronisatie hoeven
+te bevragen. Dit verbindt het snapshots-en-delta's-patroon naadloos met
+standaard webfunctionaliteit en caching.
 
 ### Snapshot ophalen
 
@@ -256,16 +296,21 @@ GET /resources/snapshots
   }
 ```
 
-Vervolgens haalt de consumer de inhoud op via het id. Grote snapshots worden
-gepagineerd geserveerd met offset-paginering; alle chunks hebben hetzelfde `id`.
-Via `total` berekent de consumer alle offsets vooraf en haalt de chunks op —
-sequentieel of parallel:
+Vervolgens haalt de consumer de inhoud op via het id. De respons levert ook de
+bijbehorende `ETag`:
 
 ```http
-GET /resources/snapshots/42?limit=100             → {"id": 42, "total": 850, "items": [...]}
-GET /resources/snapshots/42?offset=100&limit=100  → {"id": 42, "total": 850, "items": [...]}
-GET /resources/snapshots/42?offset=200&limit=100  → {"id": 42, "total": 850, "items": [...]}
-…
+GET /resources/snapshots/42?limit=100
+→ 200 OK
+  ETag: "42"
+
+  {"id": 42, "total": 850, "items": [...]}
+```
+
+```text
+GET /resources/snapshots/42?offset=100&limit=100 → {"id": 42, "total": 850, "items": [...]}
+GET /resources/snapshots/42?offset=200&limit=100 → {"id": 42, "total": 850, "items": [...]}
+...
 ```
 
 Omdat snapshots statisch zijn, treedt er geen page skew op. De consumer laadt
