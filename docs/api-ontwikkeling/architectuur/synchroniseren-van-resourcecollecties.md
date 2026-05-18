@@ -9,9 +9,11 @@ tags:
 # Synchroniseren van resourcecollecties
 
 In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
-lokale kopie (een _mirror_ of _read model_) van een resourcecollectie. Dit stelt
-hen in staat om data snel te bevragen, lokaal te verrijken of te koppelen, en
-autonomer te opereren.
+lokale kopie (een _mirror_ of _read model_) van een resourcecollectie (een
+[associative array](https://en.wikipedia.org/wiki/Associative_array) in een
+[resource model](https://docs.geostandaarden.nl/api/API-Strategie-architectuur/#definities)).
+Dit stelt hen in staat om data snel te bevragen, lokaal te verrijken of te
+koppelen, en autonomer te opereren.
 
 ```mermaid
 graph RL
