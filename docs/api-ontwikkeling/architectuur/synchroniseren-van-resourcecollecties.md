@@ -26,43 +26,51 @@ graph RL
         (HTTP)`"--> mirror
 ```
 
-Zelfs bij middelgrote datasets of frequente updates lopen bestaande
-synchronisatie-benaderingen echter tegen technische grenzen aan:
+Zelfs bij middelgrote datasets of frequente mutaties lopen traditionele
+synchronisatie-benaderingen stuk op een spanningsveld: enerzijds moet een
+consumer een consistente en initiële dataset kunnen opbouwen (_bootstrapping_),
+en anderzijds moeten actuele mutaties efficiënt en zonder te veel data transfer
+opgehaald kunnen worden.
 
-- **Periodiek compleet ophalen schaalt niet:** Vanaf een relatief bescheiden
-  omvang (bijvoorbeeld tienduizenden records) is het periodiek inlezen van de
-  volledige set onwerkbaar. Het resulteert in onnodig netwerkverkeer, langdurige
-  verwerkingstijden en onnodige druk op de systemen van de provider.
-- **Gepagineerde `GET`s zijn inconsistent onder verandering ('page skew'):**
-  Vraagt een consumer de data in stukjes op en muteert de collectie in de
-  tussentijd, dan verschuiven de records over de paginagrenzen. Tijdens dit
-  proces kunnen items ongemerkt worden overgeslagen of dubbel worden ingelezen.
-  Zie
-  [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md)
-  voor een uitleg van dit probleem.
-- **Een puur event-driven aanpak vereist volledige historie:** Zonder
-  snapshot-mechanisme moet een nieuwe consumer alle historische delta's afspelen
-  om een begintoestand op te bouwen (_bootstrapping_). Dit vereist dat de
-  provider de volledige event-log permanent bewaart. Naarmate het systeem ouder
-  wordt, neemt de bootstrap-tijd evenredig toe. Event sourcing kent een
-  snapshot-techniek om lange replay-ketens te versnellen, maar daarmee verdwijnt
-  de bewaarlast voor de provider niet: om nieuwe consumers later nog te kunnen
-  laten instappen, moet de onderliggende wijzigingshistorie beschikbaar blijven.
-  Dat botst met situaties waarin gegevens juist uit de historie moeten
-  verdwijnen, bijvoorbeeld na een beroep op het
-  [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden).
-  Het verwijderen van zo'n historisch record maakt de replay-keten immers
-  onvolledig.
+In de praktijk zien we vaak één van de volgende benaderingen, die elk op
+fundamentele knelpunten stuiten:
 
-Deze beperkingen laten zien dat het synchroniseren van een resourcecollectie
-meer vraagt dan alleen paginering of een stroom van wijzigingen. Een consumer
-moet zowel een consistente toestand kunnen overnemen als daarna incrementeel
-kunnen bijwerken.
+- **De "Full Sync" (Alles inladen):**
+  - **Periodiek compleet ophalen schaalt niet:** Vanaf een relatief kleine
+    omvang resulteert dit in onnodig netwerkverkeer en hoge belasting bij de
+    provider. Bovendien moet dit bij frequent wijzigende datasets zó vaak
+    gebeuren, dat de belasting op de systemen buitensporig toeneemt.
+  - **Gepagineerde `GET`s zijn inconsistent ('page skew'):** Haal je de dataset
+    voor de efficiëntie gepagineerd op, dan verschuiven records vaak over
+    paginagrenzen in het geval van tussentijdse mutaties. Items kunnen dan
+    ongemerkt worden overgeslagen of dubbel worden verwerkt. Zie
+    [Paginering van resourcecollecties](./paginering-van-resourcecollecties.md).
+
+- **De "Delta Sync" (Alleen wijzigingen ophalen):**
+  - **Timestamp-based (bijv. `modifiedAfter`):** Een veelgebruikte optimalisatie
+    is enkel resources op te vragen die gewijzigd zijn na een eerdere controle.
+    Ondanks de winst in efficiëntie, is een nadeel hoe in veel APIs _hard
+    deletes_ werken: een verwijderd record heeft geen resource of timestamp
+    meer, waardoor deze uit de collectie verdwijnt maar niet in de
+    wijzigingslijst naar voren komt. De consumer weet daardoor niet dat het weg
+    is, wat leidt tot achterblijvende weesgegevens ("zombie data") in de lokale
+    mirror.
+  - **Pure Event-driven stream (Webhooks/Brokers):** Effectief voor het
+    doorgeven van mutaties, maar ze missen een beknopt mechanisme voor
+    _bootstrapping_. Zonder extra endpoints om een initiële beginstand te laden,
+    is de provider gedwongen een volledig log van alle historische wijzigingen
+    te bewaren, zodat nieuwe consumers dit later kunnen afspelen (vergelijkbaar
+    met puur event-sourcing). Dat botst met dataminimalisatie en principes
+    rondom het
+    [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden).
+
+Geen van deze benaderingen lost alle vier de problemen tegelijk op: consistent
+_bootstrappen_, efficiënt bijwerken, verwijderingen correct meenemen en
+betrouwbaar herstellen na een hiaat of reset.
 
 ## Het snapshots-en-delta's-patroon
 
-Het **snapshots-en-delta's**-patroon werkt in de kern met twee parallelle
-stromen die elkaar aanvullen:
+Het **snapshots-en-delta's**-patroon werkt met twee parallelle stromen:
 
 1. **Snapshots (laagfrequent):** Een stroom van volledige momentopnames van de
    collectie. Deze grote, consistente weergaves op één specifiek moment zijn
@@ -133,7 +141,8 @@ Dit patroon biedt de volgende garanties:
 
 - **[Snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation)**:
   het snapshot beschrijft de collectie zoals die bestond op één logisch moment,
-  ongeacht wijzigingen daarna.
+  ongeacht wijzigingen daarna. Daarmee kan een consumer betrouwbaar
+  _bootstrappen_ zonder page skew of andere inconsistenties tijdens het inlezen.
 - **Deterministische volgorde per collectie**: de delta-keten definieert één
   totale volgorde per collectie. Consumers die dezelfde snapshots en delta's in
   die volgorde toepassen, eindigen daarom in dezelfde toestand. Wie twee
@@ -142,6 +151,9 @@ Dit patroon biedt de volgende garanties:
 - **Inhaalbaarheid en inspringen**: via het state-id kan een consumer op elk
   moment inspringen — zowel een nieuwe consumer die nog geen lokale toestand
   heeft als een consumer die na een onderbreking gemiste wijzigingen bijwerkt.
+  Tegelijk maakt het patroon zichtbaar wanneer dat niet meer veilig kan en een
+  nieuw snapshot nodig is, in plaats van ongemerkt gegevens kwijt te raken of
+  zombie data te laten staan.
 
 Deze garanties volgen direct uit de mechaniek van het patroon. Een snapshot
 geeft een stabiel startpunt; daarna kan een consumer alleen verder als de
@@ -341,7 +353,7 @@ delta expliciet aangeeft op welke vorige toestand hij aansluit.
   "prev_id": 42,
   "operations": [
     {
-      "type": "updated",
+      "type": "update",
       "resource_id": "item-abc",
       "resource": {
         "id": "item-abc",
@@ -359,10 +371,10 @@ laten toepassen.
 
 Elke operatie heeft minimaal een `type`:
 
-- `created`: een nieuwe resource is toegevoegd.
-- `updated`: een bestaande resource is gewijzigd of vervangen.
-- `deleted`: een resource is verwijderd; het `resource`-veld ontbreekt dan
-  bewust (tombstone).
+- `create`: voeg een nieuwe resource toe.
+- `update`: wijzig of vervang een bestaande resource.
+- `delete`: verwijder een resource; het `resource`-veld ontbreekt dan bewust
+  (tombstone).
 
 In de aanbevolen vorm bevat `resource` steeds de volledige resulterende weergave
 van het record (_Event-Carried State Transfer_). Dat is het meest robuust en
@@ -370,7 +382,7 @@ sterk aanbevolen: de consumer hoeft geen vorige toestand op te halen om de
 wijziging te begrijpen, en retries blijven idempotent.
 
 Het veld `resource_id` staat bewust ook buiten het `resource`-object. Bij een
-`deleted`-operatie is dat noodzakelijk, omdat er dan geen `resource` meer is.
+`delete`-operatie is dat noodzakelijk, omdat er dan geen `resource` meer is.
 Daarnaast kunnen consumers en tussenliggende brokers zo filteren en routeren op
 ID en type zonder eerst een zwaardere payload te deserialiseren.
 
@@ -396,7 +408,7 @@ GET /resources/deltas?after=42&limit=10
         "prev_id": 42,
         "operations": [
           {
-            "type": "updated",
+            "type": "update",
             "resource_id": "item-abc",
             "resource": { "id": "item-abc", "name": "Resource ABC - Gewijzigd" }
           }
@@ -436,10 +448,10 @@ Last-Event-ID: 42
 → 200 OK (text/event-stream)
 
 id: 57
-data: {"id": 57, "prev_id": 42, "operations": [{"type": "updated", "resource_id": "item-abc", ...}]}
+data: {"id": 57, "prev_id": 42, "operations": [{"type": "update", "resource_id": "item-abc", ...}]}
 
 id: 63
-data: {"id": 63, "prev_id": 57, "operations": [{"type": "deleted", "resource_id": "item-xyz"}]}
+data: {"id": 63, "prev_id": 57, "operations": [{"type": "delete", "resource_id": "item-xyz"}]}
 ```
 
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met het
@@ -488,7 +500,7 @@ Content-Type: application/json
   "prev_id": 42,
   "operations": [
     {
-      "type": "updated",
+      "type": "update",
       "resource_id": "item-abc",
       "resource": {
         "id": "item-abc",
@@ -523,7 +535,7 @@ verpakt, ongeacht het transportmechanisme (HTTP, SSE, broker):
 ```json
 {
   "specversion": "1.0",
-  "type": "nl.example.resources.updated",
+  "type": "nl.example.resources.update",
   "source": "/resources",
   "id": "57",
   "data": {
@@ -531,7 +543,7 @@ verpakt, ongeacht het transportmechanisme (HTTP, SSE, broker):
     "prev_id": 42,
     "operations": [
       {
-        "type": "updated",
+        "type": "update",
         "resource_id": "item-abc",
         "resource": {...}
       }
@@ -552,7 +564,7 @@ tempo:
 
 ```text
 topic: nl.example.resources.changes
-message: {"id": 57, "prev_id": 42, "operations": [{"type": "updated", "resource_id": "item-abc", ...}]}
+message: {"id": 57, "prev_id": 42, "operations": [{"type": "update", "resource_id": "item-abc", ...}]}
 ```
 
 Geschikt wanneer consumer en provider ontkoppeld moeten zijn qua timing. De
