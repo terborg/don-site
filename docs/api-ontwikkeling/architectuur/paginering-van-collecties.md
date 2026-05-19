@@ -43,20 +43,20 @@ GET /items?offset=20&limit=10
 - **Voordelen**: eenvoudig te begrijpen en te implementeren; willekeurige
   toegang tot een pagina is mogelijk; pagina's kunnen desgewenst parallel worden
   opgevraagd.
-- **Nadelen**: gevoelig voor page skew bij veranderende data; inefficiënt op
-  grote datasets omdat de database eerst de voorgaande rijen moet overslaan.
+- **Nadelen**: gevoelig voor page skew bij veranderende data;
+  [inefficiënt op grote datasets](https://www.postgresql.org/docs/current/queries-limit.html)
+  omdat de database eerst de voorgaande rijen moet overslaan.
 
 Gebruik dit patroon alleen als:
 
-- de collectie klein is, of groot maar voldoende statisch en goed indexeerbaar;
+- de collectie klein is;
 - de sortering tijdens het uitlezen stabiel blijft;
 - een consumer expliciet naar pagina 7 of offset 500 moet kunnen springen;
 - incidenteel een dubbel of gemist item geen functioneel probleem is.
 
 Gebruik dit patroon niet als:
 
-- de collectie groot is en de performance ook bij hoge offsets voorspelbaar moet
-  blijven;
+- de collectie groot is;
 - de collectie tijdens het uitlezen frequent muteert;
 - de consumer een complete collectie zonder gaten of dubbelen moet verwerken.
 
@@ -147,13 +147,13 @@ betrouwbaar verwerkt moeten worden, zie
 
 Samengevat:
 
-| Eigenschap                | Offset-based             | Cursor-based / keyset-based     |
-| ------------------------- | ------------------------ | ------------------------------- |
-| Willekeurige toegang      | Ja                       | Nee                             |
-| Schaalbaarheid            | Beperkt bij hoge offsets | Goed                            |
-| Gedrag bij mutaties       | Gevoelig voor page skew  | Robuuster tussen pagina's       |
-| Sorteervolgorde           | Vrij kiesbaar            | Vaste, stabiele sleutel vereist |
-| Implementatiecomplexiteit | Laag                     | Hoger                           |
+| Eigenschap                | Offset-based                 | Cursor-based / keyset-based     |
+| ------------------------- | ---------------------------- | ------------------------------- |
+| Willekeurige toegang      | Ja                           | Nee                             |
+| Schaalbaarheid            | Beperkt bij grote collecties | Goed                            |
+| Gedrag bij mutaties       | Gevoelig voor page skew      | Robuuster tussen pagina's       |
+| Sorteervolgorde           | Vrij kiesbaar                | Vaste, stabiele sleutel vereist |
+| Implementatiecomplexiteit | Laag                         | Hoger                           |
 
 ## Gerelateerde patronen
 
