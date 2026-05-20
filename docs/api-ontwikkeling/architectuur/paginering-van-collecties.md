@@ -5,9 +5,9 @@ tags:
   - rest
 ---
 
-# Pagineren van collecties
+# Paginering van collecties
 
-Pagineren (of _paginering_) is een patroon om een collectie binnen een REST API
+Paginering (of _pagineren_) is een patroon om een collectie binnen een REST API
 (bijvoorbeeld `/documenten`) in delen op te halen. Dit is geschikt voor het
 browsen of batchgewijs verwerken van grote hoeveelheden data. Of paginering
 bruikbaar is, hangt af van de benodigde garanties voor de consumer.
@@ -68,11 +68,11 @@ heeft, is offset-based eenvoudiger.
 
 ## Paginering vs. dataconsistentie
 
-Beide methodes zijn **ongeschikt** als dataconsistentie cruciaal is: paginering
+Beide methodes zijn **ongeschikt** als dataconsistentie gewenst is: paginering
 is geen mechanisme voor synchronisatie van collecties. Muteert de collectie
 tijdens of tussen requests? Dan kun je paginering alléén inzetten als een
-incidenteel gemist of dubbel item acceptabel is (bijv. bij een publiek
-nieuwsoverzicht).
+incidenteel gemist of dubbel item acceptabel is (bijv. bij niet-persistente
+weergave of browsen).
 
 Voor strikte synchronisatie waarbij elke wijziging betrouwbaar moet doorkomen,
 is een apart synchronisatiepatroon nodig.

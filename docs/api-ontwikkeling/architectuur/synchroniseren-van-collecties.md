@@ -44,7 +44,7 @@ fundamentele knelpunten stuiten:
     collectie voor de efficiëntie gepagineerd op, dan verschuiven records vaak
     over paginagrenzen in het geval van tussentijdse mutaties. Items kunnen dan
     ongemerkt worden overgeslagen of dubbel worden verwerkt. Zie
-    [Pagineren van collecties](./pagineren-van-collecties.md).
+    [Paginering van collecties](./paginering-van-collecties.md).
 
 - **De "Delta Sync" (Alleen wijzigingen ophalen):**
   - **Timestamp-based (bijv. `modifiedAfter`):** Een veelgebruikte optimalisatie
@@ -614,6 +614,6 @@ daar snapshots niet voor nodig maar bijvoorbeeld een event-sourcingpatroon.
 
 - Voor navigatie door de snapshot-pagina's (en een vergelijking van
   pagineerstrategieën), zie
-  [Pagineren van collecties](./pagineren-van-collecties.md).
+  [Paginering van collecties](./paginering-van-collecties.md).
 - Voor een bredere introductie op event-driven communicatiepatronen, zie
   [Event Driven Architecture](./eda.md).
