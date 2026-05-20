@@ -26,47 +26,37 @@ graph RL
         (HTTP)`"--> mirror
 ```
 
-Zelfs bij middelgrote collecties of frequente mutaties lopen traditionele
-synchronisatie-benaderingen stuk op een spanningsveld: enerzijds moet een
-consumer een consistente en initiële collectie kunnen opbouwen
-(_bootstrapping_), en anderzijds moeten actuele mutaties efficiënt en zonder te
-veel data transfer opgehaald kunnen worden.
+Een centraal uitgangspunt hierbij is dat een collectie altijd consistent
+overgebracht moet worden, zonder gaten of duplicaten door iteratieve levering.
+Traditionele methoden slagen er in de praktijk zelden in om het leveren van een
+consistent instapmoment efficiënt te verenigen met het actueel houden van de
+lokale kopie. Dit leidt vaak tot één van twee bekende oplossingsrichtingen:
 
-In de praktijk zien we vaak één van de volgende benaderingen, die elk op
-fundamentele knelpunten stuiten:
+**Periodiek de gehele collectie opvragen** schaalt slecht door de overmatige
+netwerk- en serverbelasting die het oplevert. Daarbij is het technisch vaak
+onhaalbaar om een omvangrijke collectie in één HTTP-respons via een regulier
+endpoint te serveren. Paginering biedt hierin geen betrouwbare oplossing:
+doordat mutaties tijdens het uitlezen doorlopen, ontstaat 'page skew'. Daardoor
+worden items ongemerkt overgeslagen of juist dubbel verwerkt. Zie
+[Paginering van collecties](./paginering-van-collecties.md).
 
-- **De "Full Sync" (Alles inladen):**
-  - **Periodiek compleet ophalen schaalt niet:** Vanaf een relatief kleine
-    omvang resulteert dit in onnodig netwerkverkeer en hoge belasting bij de
-    provider. Bovendien moet dit bij frequent wijzigende collecties zó vaak
-    gebeuren, dat de belasting op de systemen buitensporig toeneemt.
-  - **Gepagineerde `GET`s zijn inconsistent ('page skew'):** Haal je de
-    collectie voor de efficiëntie gepagineerd op, dan verschuiven records vaak
-    over paginagrenzen in het geval van tussentijdse mutaties. Items kunnen dan
-    ongemerkt worden overgeslagen of dubbel worden verwerkt. Zie
-    [Paginering van collecties](./paginering-van-collecties.md).
+**Een stroom van wijzigingen verwerken** is bijzonder efficiënt voor afnemers
+die hun lokale kopie actueel willen houden, maar mist daarentegen een actueel
+totaalkader dat als vast instapmoment kan dienen. Zonder zo'n startpunt zouden
+afnemers om te kunnen inspringen — of om te herstellen na dataverlies — exact
+álle historische gebeurtenissen moeten verwerken. Omdat dit logboek vol
+wijzigingen bovendien al snel vele malen groter is dan de actuele collectie
+zelf, resulteert dit in extreme verwerkingstijden bij een 'cold boot' en staat
+dit haaks op _privacy by design_-principes zoals dataminimalisatie en het
+[recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden)
+als de collectie onder de AVG vallende gegevens bevat.
 
-- **De "Delta Sync" (Alleen wijzigingen ophalen):**
-  - **Timestamp-based (bijv. `modifiedAfter`):** Een veelgebruikte optimalisatie
-    is enkel resources op te vragen die gewijzigd zijn na een eerdere controle.
-    Ondanks de winst in efficiëntie, is een nadeel hoe in veel APIs _hard
-    deletes_ werken: een verwijderd record heeft geen resource of timestamp
-    meer, waardoor deze uit de collectie verdwijnt maar niet in de
-    wijzigingslijst naar voren komt. De consumer weet daardoor niet dat het weg
-    is, wat leidt tot achterblijvende weesgegevens ("zombie data") in de lokale
-    mirror.
-  - **Pure Event-driven stream (Webhooks/Brokers):** Effectief voor het
-    doorgeven van mutaties, maar ze missen een beknopt mechanisme voor
-    _bootstrapping_. Zonder extra endpoints om een initiële beginstand te laden,
-    is de provider gedwongen een volledig log van alle historische wijzigingen
-    te bewaren, zodat nieuwe consumers dit later kunnen afspelen (vergelijkbaar
-    met puur event-sourcing). Dat botst met dataminimalisatie en principes
-    rondom het
-    [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden).
-
-Geen van deze benaderingen lost alle vier de problemen tegelijk op: consistent
-_bootstrappen_, efficiënt bijwerken, verwijderingen correct meenemen en
-betrouwbaar herstellen na een hiaat of reset.
+Kortom: los van elkaar schieten beide methoden tekort. Enkel periodieke kopieën
+opvragen is te zwaar en traag, en alleen wijzigingen verwerken mist een
+betrouwbaar beginpunt. Door deze twee echter te combineren, kunnen alle gewenste
+eigenschappen wél bereikt worden: efficiënt en consistent een volledige toestand
+ophalen, mutaties verwerken met minimale data-uitwisseling, en fouttolerant
+herstellen na verlies van connectie.
 
 ## Het snapshots-en-delta's-patroon
 
