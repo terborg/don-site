@@ -72,7 +72,7 @@ werkt met twee parallelle stromen:
 De kern van het patroon is
 **[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency)**:
 elke consumer die een snapshot neemt en de delta-keten daarna volledig volgt,
-eindigt in dezelfde toestand.
+eindigt gegarandeerd in dezelfde toestand.
 
 Samen vormen zij het synchronisatiemechanisme. Dit artikel werkt het patroon uit
 voor HTTP — het enige transportmiddel dat federatieve serviceconnectiviteit
@@ -93,29 +93,10 @@ de structuur van delta's aan op het
 
 Een consumer houdt minimaal twee dingen bij:
 
-- **`state-id`** — het `id` van de laatste verwerkte snapshot of delta. Is er
-  nog geen snapshot geladen, dan is het state-id afwezig.
-- **`mirror`** — de lokale kopie van de resourcecollectie, opgebouwd uit het
+- **Cursor** — de positie in de gecombineerde reeks van snapshots en delta's. Is
+  er nog geen snapshot geladen, dan is de cursor afwezig.
+- **Mirror** — de lokale kopie van de resourcecollectie, opgebouwd uit het
   snapshot en de daarna toegepaste delta's.
-
-Bij webhooks en broker is optioneel een derde nodig:
-
-- **`buffer`** — tijdelijke opslag voor delta's die arriveren vóór hun
-  voorganger, omdat berichten _out-of-order_ kunnen aankomen.
-
-#### Signalen
-
-Afhankelijk van het transport ontvangt een consumer de volgende signalen:
-
-| Signaal             | Transport                     | Betekenis                                                    |
-| ------------------- | ----------------------------- | ------------------------------------------------------------ |
-| Snapshot-lijst      | HTTP                          | Beschikbare snapshots; consumer kiest op `created_at`        |
-| Snapshot-chunk      | HTTP                          | Pagina van snapshot-inhoud; samen vormen ze de begintoestand |
-| Delta               | polling, SSE, webhook, broker | Wijziging om toe te passen; valideer eerst `prev_id`         |
-| `410 Gone`          | polling, SSE-herverbinding    | State-id onbekend of verlopen → nieuw snapshot vereist       |
-| Verbinding gesloten | SSE                           | Herverbinden; bij onbekend state-id volgt `410 Gone`         |
-| `prev_id`-mismatch  | webhook, broker, SSE          | Hiaat of reset → state-id ongeldig → nieuw snapshot vereist  |
-| Lege delta-lijst    | polling                       | Consumer is actueel; wachten op volgende poll                |
 
 #### Toestandsmachine
 
@@ -125,7 +106,7 @@ bevindt zich in de basis in de toestand **Volgen**:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Herstellen: Geen state-id aanwezig
+    [*] --> Herstellen: Geen cursor aanwezig
 
     Herstellen --> Volgen: Snapshot geladen
 
@@ -133,18 +114,17 @@ stateDiagram-v2
     Volgen --> Wachten: Actueel (geen nieuwe delta)
     Wachten --> Volgen: Nieuwe delta
 
-    Volgen --> Herstellen: 410 Gone of hiaat
+    Volgen --> Herstellen: Cursor verlopen of hiaat
 ```
 
-- **Herstellen (Snapshot laden)**: het state-id ontbreekt (eerste start), is
-  verlopen (`410 Gone`) of sluit niet aan (`prev_id`-mismatch). De consumer
-  haalt een nieuw snapshot op en stelt het state-id in op het id daarvan.
-- **Volgen ↔ Wachten**: de consumer past delta's toe en schuift het state-id
-  steeds op. Zijn er geen nieuwe delta's, dan wacht de consumer (via SSE of
-  polling) tot er een binnenkomt.
-- **Volgen → Herstellen**: de provider of de data signaleert dat het state-id
-  niet meer geldig is. De consumer wijkt af van de "happy flow" en herstart
-  vanuit een nieuw snapshot.
+- **Herstellen (Snapshot laden)**: de cursor ontbreekt (eerste start) of is
+  verlopen — de provider herkent de cursor niet meer, of er is een hiaat in de
+  keten. De consumer laadt een nieuw snapshot en stelt de cursor in op de
+  positie daarvan.
+- **Volgen ↔ Wachten**: de consumer past delta's toe en schuift de cursor steeds
+  op. Zijn er geen nieuwe delta's, dan wacht de consumer tot er een binnenkomt.
+- **Volgen → Herstellen**: de provider signaleert dat de cursor niet meer geldig
+  is. De consumer herstart vanuit een nieuw snapshot.
 
 ### Provider
 
@@ -165,17 +145,14 @@ flowchart TD
 ```
 
 - **Delta publiceren**: bij elke wijziging of groep wijzigingen legt de provider
-  een delta atomair vast — met een nieuw `id` en het vorige `id` als `prev_id`.
-  De delta-keten blijft zo aaneengesloten.
-- **Snapshot aanmaken**: na een datamigratie, schemawijziging, terugdraaien naar
-  een eerdere toestand, toepassing van het recht op verwijdering of een andere
-  complete reset maakt de provider een nieuw snapshot aan. Consumers ontdekken
-  dit vanzelf: bij polling en SSE-herverbinding via `410 Gone`, bij webhooks en
-  broker via een `prev_id`-mismatch in de volgende ontvangen delta.
+  een delta atomair vast. De delta-keten blijft zo aaneengesloten.
+- **Snapshot aanmaken**: na een datamigratie, schemawijziging, complete reset of
+  toepassing van het recht op verwijdering maakt de provider een nieuw snapshot
+  aan. Consumers merken dit vanzelf: hun cursor sluit niet meer aan op de keten
+  en ze starten opnieuw vanuit het nieuwe snapshot.
 - **Verouderde data opruimen**: na het verstrijken van de retentieperiode
-  verwijdert de provider snapshots en delta's. Bij polling en SSE-herverbinding
-  ontvangen consumers met een verlopen state-id `410 Gone`; bij webhooks en
-  broker signaleert een `prev_id`-mismatch dat het state-id verlopen is.
+  verwijdert de provider snapshots en delta's. Consumers met een verlopen cursor
+  worden vanzelf naar een nieuw snapshot gestuurd.
 
 ## REST API
 
