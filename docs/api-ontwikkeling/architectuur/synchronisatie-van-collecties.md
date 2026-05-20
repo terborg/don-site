@@ -8,10 +8,10 @@ tags:
 
 # Synchronisatie van collecties
 
-In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
-lokale kopie van een collectie binnen een REST API (bijvoorbeeld `/documenten`).
-Dit stelt hen in staat om data snel te bevragen, lokaal te verrijken of te
-koppelen, en autonomer te opereren.
+In gedistribueerde systemen hebben consumers vaak een actuele, lokale kopie
+nodig van een collectie binnen een REST API (bijvoorbeeld `/documenten`).
+Daarmee kunnen zij data snel bevragen, lokaal verrijken of koppelen, en
+autonomer opereren.
 
 ```mermaid
 graph RL
@@ -26,37 +26,34 @@ graph RL
         (HTTP)`"--> mirror
 ```
 
-Een centraal uitgangspunt hierbij is dat een collectie altijd consistent
-overgebracht moet worden, zonder gaten of duplicaten door iteratieve levering.
-Traditionele methoden slagen er in de praktijk zelden in om het leveren van een
-consistent instapmoment efficiënt te verenigen met het actueel houden van de
-lokale kopie. Dit leidt vaak tot één van twee bekende oplossingsrichtingen:
+De uitdaging is niet het kopiëren zelf, maar het verkrijgen van een consistente
+kopie terwijl de bron continu blijft veranderen. Zonder extra maatregelen leidt
+iteratieve levering al snel tot gaten of duplicaten. In de praktijk komt het
+daarom vaak neer op één van twee bekende oplossingsrichtingen:
 
-**Periodiek de gehele collectie opvragen** schaalt slecht door de overmatige
-netwerk- en serverbelasting die het oplevert. Daarbij is het technisch vaak
-onhaalbaar om een omvangrijke collectie in één HTTP-respons via een regulier
-endpoint te serveren. Paginering biedt hierin geen betrouwbare oplossing:
-doordat mutaties tijdens het uitlezen doorlopen, ontstaat 'page skew'. Daardoor
-worden items ongemerkt overgeslagen of juist dubbel verwerkt. Zie
+**Periodiek de gehele collectie opvragen** is eenvoudig, maar schaalt slecht.
+Het veroorzaakt veel netwerk- en serverbelasting, terwijl omvangrijke collecties
+vaak niet in één HTTP-respons via een regulier endpoint te leveren zijn.
+Paginering biedt hierbij geen betrouwbaar antwoord: doordat mutaties tijdens het
+uitlezen doorgaan, ontstaat 'page skew'. Daardoor worden items ongemerkt
+overgeslagen of juist dubbel verwerkt. Zie
 [Paginering van collecties](./paginering-van-collecties.md).
 
-**Een stroom van wijzigingen verwerken** is bijzonder efficiënt voor afnemers
-die hun lokale kopie actueel willen houden, maar mist daarentegen een actueel
-totaalkader dat als vast instapmoment kan dienen. Zonder zo'n startpunt zouden
-afnemers om te kunnen inspringen — of om te herstellen na dataverlies — exact
-álle historische gebeurtenissen moeten verwerken. Omdat dit logboek vol
-wijzigingen bovendien al snel vele malen groter is dan de actuele collectie
-zelf, resulteert dit in extreme verwerkingstijden bij een 'cold boot' en staat
-dit haaks op _privacy by design_-principes zoals dataminimalisatie en het
+**Een stroom van wijzigingen verwerken** is juist zeer efficiënt om een lokale
+kopie actueel te houden, maar vereist op zichzelf starten bij het historische
+begin. Een consumer die wil inspringen — of herstellen na dataverlies — zou
+anders exact álle historische gebeurtenissen moeten replayen. Zo'n logboek is
+bovendien al snel vele malen groter dan de actuele collectie zelf. Dat leidt tot
+extreme verwerkingstijden bij een 'cold boot' en schuurt met _privacy by
+design_, waaronder dataminimalisatie en het
 [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden)
-als de collectie onder de AVG vallende gegevens bevat.
+als de collectie persoonsgegevens bevat.
 
-Kortom: los van elkaar schieten beide methoden tekort. Enkel periodieke kopieën
-opvragen is te zwaar en traag, en alleen wijzigingen verwerken mist een
-betrouwbaar beginpunt. Door deze twee echter te combineren, kunnen alle gewenste
-eigenschappen wél bereikt worden: efficiënt en consistent een volledige toestand
-ophalen, mutaties verwerken met minimale data-uitwisseling, en fouttolerant
-herstellen na verlies van connectie.
+Kortom: los van elkaar schieten beide methoden tekort. Alleen periodieke kopieën
+ophalen is te zwaar en te kwetsbaar; alleen wijzigingen verwerken vereist op
+zichzelf starten bij het historische begin. Juist door beide te combineren,
+ontstaat een patroon dat wel levert wat nodig is: consistent instappen,
+efficiënt bijblijven en fouttolerant herstellen.
 
 ## Het snapshots-en-delta's-patroon
 
