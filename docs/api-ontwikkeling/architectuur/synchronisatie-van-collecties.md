@@ -27,9 +27,8 @@ graph RL
 ```
 
 De uitdaging is niet het kopiëren zelf, maar het verkrijgen van een consistente
-kopie terwijl de bron continu blijft veranderen. Zonder extra maatregelen leidt
-iteratieve levering al snel tot gaten of duplicaten. In de praktijk komt het
-daarom vaak neer op één van twee bekende oplossingsrichtingen:
+kopie terwijl de bron continu blijft veranderen. In de praktijk komt het daarom
+vaak neer op één van twee bekende oplossingsrichtingen:
 
 **Periodiek de gehele collectie opvragen** is eenvoudig, maar schaalt slecht.
 Het veroorzaakt veel netwerk- en serverbelasting, terwijl omvangrijke collecties
@@ -40,20 +39,20 @@ overgeslagen of juist dubbel verwerkt. Zie
 [Paginering van collecties](./paginering-van-collecties.md).
 
 **Een stroom van wijzigingen verwerken** is juist zeer efficiënt om een lokale
-kopie actueel te houden, maar vereist op zichzelf starten bij het historische
-begin. Een consumer die wil inspringen — of herstellen na dataverlies — zou
-anders exact álle historische gebeurtenissen moeten replayen. Zo'n logboek is
-bovendien al snel vele malen groter dan de actuele collectie zelf. Dat leidt tot
-extreme verwerkingstijden bij een 'cold boot' en schuurt met _privacy by
-design_, waaronder dataminimalisatie en het
+kopie actueel te houden, maar zonder aanvullend mechanisme is het historische
+begin het enige instappunt. Een consumer die wil inspringen — of herstellen na
+dataverlies — zou anders exact álle historische gebeurtenissen moeten replayen.
+Zo'n logboek is bovendien al snel vele malen groter dan de actuele collectie
+zelf. Dat leidt tot extreme verwerkingstijden bij een 'cold boot' en schuurt met
+_privacy by design_, waaronder dataminimalisatie en het
 [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden)
 als de collectie persoonsgegevens bevat.
 
 Kortom: los van elkaar schieten beide methoden tekort. Alleen periodieke kopieën
-ophalen is te zwaar en te kwetsbaar; alleen wijzigingen verwerken vereist op
-zichzelf starten bij het historische begin. Juist door beide te combineren,
-ontstaat een patroon dat wel levert wat nodig is: consistent instappen,
-efficiënt bijblijven en fouttolerant herstellen.
+ophalen is te zwaar en te kwetsbaar; alleen wijzigingen verwerken kent zonder
+aanvullend mechanisme alleen het historische begin als instappunt. Juist door
+beide te combineren, ontstaat een patroon dat wel levert wat nodig is:
+consistent instappen, efficiënt bijblijven en fouttolerant herstellen.
 
 ## Het snapshots-en-delta's-patroon
 
