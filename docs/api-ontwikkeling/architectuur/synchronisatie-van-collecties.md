@@ -66,6 +66,11 @@ Het **snapshots-en-delta's**-patroon werkt met twee parallelle stromen:
    Deze kleine updates bevatten de individuele mutaties (aanmaken, wijzigen,
    verwijderen) die de collectie van de ene naar de andere toestand brengen.
 
+De kern van het patroon is
+**[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency)**:
+elke consumer die een snapshot neemt en de delta-keten daarna volledig volgt,
+eindigt in dezelfde toestand.
+
 Samen vormen zij het synchronisatiemechanisme. Dit artikel werkt het patroon uit
 voor HTTP — het enige transportmiddel dat federatieve serviceconnectiviteit
 ondersteunt en op de
@@ -78,89 +83,6 @@ Wanneer interoperabiliteit een gestandaardiseerde event-envelop vereist, sluit
 de structuur van delta's aan op het
 [NLGov-profiel voor CloudEvents](https://gitdocumentatie.logius.nl/publicatie/notificatieservices/cloudevents-nl/1.1/)
 (pas toe, leg uit). Het patroon werkt ook zonder deze extra afhankelijkheid.
-
-Een consumer kan op een recent moment inspringen — niet per se bij het begin.
-Omdat het patroon geen volledige historische replay vereist, hoeft een provider
-ook geen onbeperkte wijzigingsgeschiedenis beschikbaar te houden. Dat past beter
-bij resourcecollecties met persoonsgegevens, waar dataminimalisatie en
-bewaartijd expliciete ontwerpkeuzes zijn.
-
-De provider kan op elk moment een nieuwe snapshot publiceren — na een
-datamigratie, schemawijziging, terugdraaien naar een eerdere toestand, complete
-reset of nadat het recht op verwijderen is toegepast. Consumers ontdekken dit
-vanzelf via het protocol en synchroniseren opnieuw zonder dat de provider ze
-actief hoeft te notificeren.
-
-Aan de basis van het patroon ligt het concept van een **toestand** (_state_ of
-_momentopname_). Een resourcecollectie doorloopt in de tijd een keten van
-achtereenvolgende toestanden. Elke toestand (de collectie op exact dat moment)
-heeft een uniek **state-id**—dit kan een oplopend transactienummer, tijdstempel,
-UUID of hash zijn. De provider bepaalt de exacte vorm, zolang elk state-id
-binnen een collectie maar altijd uniek is.
-
-> **Relatie met ETag**  
-> Een `ETag` kan bij een HTTP-implementatie een bruikbare representatie zijn van
-> een `state-id`, maar is geen algemene vervanging ervan. Een `ETag` hoort bij
-> een specifieke HTTP-representatie; het `state-id` identificeert de logische
-> toestand van de collectie, ook buiten HTTP, bijvoorbeeld bij SSE, webhooks of
-> een message broker. Geeft een collectie-endpoint één canonieke representatie
-> van de actuele toestand terug, dan kan de provider het bijbehorende `state-id`
-> als sterke `ETag` meesturen. Die koppeling is alleen betrouwbaar binnen die
-> representatie; zodra dezelfde collectie via meerdere representaties of
-> projecties beschikbaar is, is aanvullende afbakening nodig. Zie ook
-> [Veilige gelijktijdigheid met optimistic locking](./gelijktijdigheid-met-optimistic-locking.md)
-> voor het gebruik van `ETag` bij conditionele requests.
-
-Het patroon modelleert de overdracht van de toestand of overgangen via twee
-structuren:
-
-- **Snapshot**: de representatie van de collectie in zo'n specifieke toestand.
-  Een snapshot is onlosmakelijk gekoppeld aan één `state-id`. De (al dan niet
-  lege) begintoestand van het systeem is een initieel snapshot.
-- **Delta**: de wijziging van een toestand naar de opvolgende toestand. Een
-  delta specificeert expliciet het vertrekpunt (`prev_id`) én het nieuwe
-  bestemmingspunt (`id`, de nieuwe toestand die dankzij deze delta ontstaat).
-  Een delta kan één of meerdere `operations` omvatten; die moeten als één
-  atomair geheel verwerkt worden.
-
-Een consumer 'surft' langs de toestanden. Hij bouwt initieel op met een snapshot
-(en kent dan het bijbehorende `state-id`). Daarna volgt hij de keten door te
-controleren of een binnengekomen delta start bij zijn huidige toestand
-(`prev_id` gelijk aan de eigen `state-id`), waarna zijn lokale `state-id`
-doorschuift naar het `id` van de net verwerkte delta.
-
-## Garanties
-
-Dit patroon biedt de volgende garanties:
-
-- **[Snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation)**:
-  het snapshot beschrijft de collectie zoals die bestond op één logisch moment,
-  ongeacht wijzigingen daarna. Daarmee kan een consumer betrouwbaar
-  _bootstrappen_ zonder page skew of andere inconsistenties tijdens het inlezen.
-- **Deterministische volgorde per collectie**: de delta-keten definieert één
-  totale volgorde per collectie. Consumers die dezelfde snapshots en delta's in
-  die volgorde toepassen, eindigen daarom in dezelfde toestand. Wie twee
-  collecties combineert — elk met eigen id's — heeft geen totale volgorde over
-  beide stromen heen.
-- **Inhaalbaarheid en inspringen**: via het state-id kan een consumer op elk
-  moment inspringen — zowel een nieuwe consumer die nog geen lokale toestand
-  heeft als een consumer die na een onderbreking gemiste wijzigingen bijwerkt.
-  Tegelijk maakt het patroon zichtbaar wanneer dat niet meer veilig kan en een
-  nieuw snapshot nodig is, in plaats van ongemerkt gegevens kwijt te raken of
-  zombie data te laten staan.
-
-Deze garanties volgen direct uit de mechaniek van het patroon. Een snapshot
-geeft een stabiel startpunt; daarna kan een consumer alleen verder als de
-volgende delta met `prev_id` exact aansluit op het huidige state-id. Zodra die
-aansluiting ontbreekt, is gecontroleerd herstel nodig: opnieuw beginnen vanaf
-een nieuw snapshot.
-
-Deze garanties hebben een prijs: een consumer loopt altijd enigszins achter op
-de werkelijkheid. Bij REST polling zit er een venster tussen het moment van een
-wijziging en het moment van opvragen. Bij SSE en event-driven varianten is de
-latentie kleiner, maar nooit nul. De toestand die een consumer ziet is altijd
-intern consistent — ze beschrijft een werkelijke vroegere toestand van de
-collectie — maar ze kan verouderd zijn.
 
 ### Consumer
 
@@ -254,6 +176,11 @@ flowchart TD
 
 ## REST API
 
+In deze invulling identificeert een **state-id** de exacte toestand van de
+collectie op een bepaald moment — bijvoorbeeld een oplopend transactienummer,
+tijdstempel, UUID of hash. De provider bepaalt de exacte vorm; elk state-id moet
+uniek zijn binnen de collectie.
+
 De onderstaande invulling is een aanbeveling. Het patroon zelf — snapshot,
 delta, state-id — is leidend; de URL-structuur en veldnamen zijn niet verplicht.
 Wie de aanbeveling volgt, maakt zijn API direct bruikbaar voor consumers die het
@@ -286,6 +213,16 @@ Consumers weten hiermee direct wat de allernieuwste `state-id` van de collectie
 is, zonder dat ze per se de structuur voor grootschalige synchronisatie hoeven
 te bevragen. Dit verbindt het snapshots-en-delta's-patroon naadloos met
 standaard webfunctionaliteit en caching.
+
+:::note Relatie tussen ETag en state-id Een `ETag` kan een bruikbare
+representatie zijn van een `state-id`. Een `ETag` hoort bij een specifieke
+HTTP-representatie; het `state-id` identificeert de logische toestand van de
+collectie. Geeft een collectie-endpoint één canonieke representatie van de
+actuele toestand terug, dan kan de provider het bijbehorende `state-id` als
+sterke `ETag` meesturen. Zodra dezelfde collectie via meerdere representaties of
+projecties beschikbaar is, is aanvullende afbakening nodig. Zie ook
+[Veilige gelijktijdigheid met optimistic locking](./gelijktijdigheid-met-optimistic-locking.md)
+voor het gebruik van `ETag` bij conditionele requests. :::
 
 ### Snapshot ophalen
 
