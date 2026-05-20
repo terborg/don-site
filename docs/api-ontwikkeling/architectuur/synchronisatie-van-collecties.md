@@ -56,15 +56,18 @@ instappen, efficiënt bijblijven en fouttolerant herstellen.
 
 ## Het snapshots-en-delta's-patroon
 
-Het **snapshots-en-delta's**-patroon werkt met twee parallelle stromen:
+Het **snapshots-en-delta's** (of _snapshots en incrementele updates_) patroon
+werkt met twee parallelle stromen:
 
 1. **Snapshots (laagfrequent):** Een stroom van volledige momentopnames van de
    collectie. Deze grote, consistente weergaves op één specifiek moment zijn
    ideaal voor nieuwe consumers (bootstrapping) of na verlies van lokale status
-   (herstel).
+   bij de consumer (herstel).
 2. **Delta's (hoogfrequent):** Een continue stroom van incrementele wijzigingen.
    Deze kleine updates bevatten de individuele mutaties (aanmaken, wijzigen,
    verwijderen) die de collectie van de ene naar de andere toestand brengen.
+   Snapshots en delta's gebruiken eenzelfde cursor, zodat beide reeksen
+   samengevoegd kunnen worden.
 
 De kern van het patroon is
 **[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency)**:
