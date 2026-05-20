@@ -6,7 +6,7 @@ tags:
   - eda
 ---
 
-# Synchroniseren van collecties
+# Synchronisatie van collecties
 
 In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
 lokale kopie van een collectie binnen een REST API (bijvoorbeeld `/documenten`).
