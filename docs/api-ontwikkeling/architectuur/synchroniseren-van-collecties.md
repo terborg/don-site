@@ -9,30 +9,28 @@ tags:
 # Synchroniseren van collecties
 
 In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
-lokale kopie (een _mirror_ of _read model_) van een resourcecollectie (een
-[associative array](https://en.wikipedia.org/wiki/Associative_array) in een
-[resource model](https://docs.geostandaarden.nl/api/API-Strategie-architectuur/#definities)).
+lokale kopie van een collectie binnen een REST API (bijvoorbeeld `/documenten`).
 Dit stelt hen in staat om data snel te bevragen, lokaal te verrijken of te
 koppelen, en autonomer te opereren.
 
 ```mermaid
 graph RL
   subgraph Consumer
-    mirror["`Resourcecollectie
+    mirror["`Collectie
              (consistente view)`"]
   end
   subgraph Provider
-    rc["`Resourcecollectie`"]
+    rc["`Collectie`"]
   end
   rc --"`Synchronisatie
         (HTTP)`"--> mirror
 ```
 
-Zelfs bij middelgrote datasets of frequente mutaties lopen traditionele
+Zelfs bij middelgrote collecties of frequente mutaties lopen traditionele
 synchronisatie-benaderingen stuk op een spanningsveld: enerzijds moet een
-consumer een consistente en initiële dataset kunnen opbouwen (_bootstrapping_),
-en anderzijds moeten actuele mutaties efficiënt en zonder te veel data transfer
-opgehaald kunnen worden.
+consumer een consistente en initiële collectie kunnen opbouwen
+(_bootstrapping_), en anderzijds moeten actuele mutaties efficiënt en zonder te
+veel data transfer opgehaald kunnen worden.
 
 In de praktijk zien we vaak één van de volgende benaderingen, die elk op
 fundamentele knelpunten stuiten:
@@ -40,13 +38,13 @@ fundamentele knelpunten stuiten:
 - **De "Full Sync" (Alles inladen):**
   - **Periodiek compleet ophalen schaalt niet:** Vanaf een relatief kleine
     omvang resulteert dit in onnodig netwerkverkeer en hoge belasting bij de
-    provider. Bovendien moet dit bij frequent wijzigende datasets zó vaak
+    provider. Bovendien moet dit bij frequent wijzigende collecties zó vaak
     gebeuren, dat de belasting op de systemen buitensporig toeneemt.
-  - **Gepagineerde `GET`s zijn inconsistent ('page skew'):** Haal je de dataset
-    voor de efficiëntie gepagineerd op, dan verschuiven records vaak over
-    paginagrenzen in het geval van tussentijdse mutaties. Items kunnen dan
+  - **Gepagineerde `GET`s zijn inconsistent ('page skew'):** Haal je de
+    collectie voor de efficiëntie gepagineerd op, dan verschuiven records vaak
+    over paginagrenzen in het geval van tussentijdse mutaties. Items kunnen dan
     ongemerkt worden overgeslagen of dubbel worden verwerkt. Zie
-    [Paginering van collecties](./paginering-van-collecties.md).
+    [Pagineren van collecties](./pagineren-van-collecties.md).
 
 - **De "Delta Sync" (Alleen wijzigingen ophalen):**
   - **Timestamp-based (bijv. `modifiedAfter`):** Een veelgebruikte optimalisatie
@@ -101,7 +99,7 @@ actief hoeft te notificeren.
 
 Aan de basis van het patroon ligt het concept van een **toestand** (_state_ of
 _momentopname_). Een resourcecollectie doorloopt in de tijd een keten van
-achtereenvolgende toestanden. Elke toestand (de dataset op exact dat moment)
+achtereenvolgende toestanden. Elke toestand (de collectie op exact dat moment)
 heeft een uniek **state-id**—dit kan een oplopend transactienummer, tijdstempel,
 UUID of hash zijn. De provider bepaalt de exacte vorm, zolang elk state-id
 binnen een collectie maar altijd uniek is.
@@ -616,6 +614,6 @@ daar snapshots niet voor nodig maar bijvoorbeeld een event-sourcingpatroon.
 
 - Voor navigatie door de snapshot-pagina's (en een vergelijking van
   pagineerstrategieën), zie
-  [Paginering van collecties](./paginering-van-collecties.md).
+  [Pagineren van collecties](./pagineren-van-collecties.md).
 - Voor een bredere introductie op event-driven communicatiepatronen, zie
   [Event Driven Architecture](./eda.md).

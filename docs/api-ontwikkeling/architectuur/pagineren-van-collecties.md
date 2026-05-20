@@ -5,12 +5,12 @@ tags:
   - rest
 ---
 
-# Paginering van collecties
+# Pagineren van collecties
 
-Paginering is een patroon om een collectie binnen een REST API (bijvoorbeeld
-`/documenten`) in delen op te halen. Dit is geschikt voor het browsen of
-batchgewijs verwerken van grote hoeveelheden data. Of paginering bruikbaar is,
-hangt af van de benodigde garanties voor de consumer.
+Pagineren (of _paginering_) is een patroon om een collectie binnen een REST API
+(bijvoorbeeld `/documenten`) in delen op te halen. Dit is geschikt voor het
+browsen of batchgewijs verwerken van grote hoeveelheden data. Of paginering
+bruikbaar is, hangt af van de benodigde garanties voor de consumer.
 
 De meest gangbare varianten zijn **offset-based** en **cursor-based** (ook wel
 key-based).
