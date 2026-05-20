@@ -27,8 +27,8 @@ graph RL
 ```
 
 De uitdaging is niet het kopiëren zelf, maar het verkrijgen van een consistente
-kopie terwijl de bron continu blijft veranderen. In de praktijk komt het daarom
-vaak neer op één van twee bekende oplossingsrichtingen:
+kopie van een continu veranderende bron. Er zijn twee voor de hand liggende
+benaderingen, elk met eigen beperkingen:
 
 **Periodiek de gehele collectie opvragen** is eenvoudig, maar schaalt slecht.
 Het veroorzaakt veel netwerk- en serverbelasting, terwijl omvangrijke collecties
@@ -38,21 +38,21 @@ uitlezen doorgaan, ontstaat 'page skew'. Daardoor worden items ongemerkt
 overgeslagen of juist dubbel verwerkt. Zie
 [Paginering van collecties](./paginering-van-collecties.md).
 
-**Een stroom van wijzigingen verwerken** is juist zeer efficiënt om een lokale
-kopie actueel te houden, maar zonder aanvullend mechanisme is het historische
-begin het enige instappunt. Een consumer die wil inspringen — of herstellen na
-dataverlies — zou anders exact álle historische gebeurtenissen moeten replayen.
-Zo'n logboek is bovendien al snel vele malen groter dan de actuele collectie
-zelf. Dat leidt tot extreme verwerkingstijden bij een 'cold boot' en schuurt met
-_privacy by design_, waaronder dataminimalisatie en het
+**Een stroom van wijzigingen verwerken** is efficiënt om een lokale kopie
+actueel te houden, maar zonder aanvullend mechanisme is het enige instappunt het
+historische begin. Een consumer die wil inspringen — of herstellen na
+dataverlies — zal (zonder aanvullend mechanisme) alle historische gebeurtenissen
+moeten replayen. Zo'n logboek is bovendien al snel vele malen groter dan de
+actuele collectie zelf. Dat leidt tot grote verwerkingstijden bij een 'cold
+boot' en schuurt met _privacy by design_, waaronder dataminimalisatie en het
 [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden)
 als de collectie persoonsgegevens bevat.
 
 Kortom: los van elkaar schieten beide methoden tekort. Alleen periodieke kopieën
 ophalen is te zwaar en te kwetsbaar; alleen wijzigingen verwerken kent zonder
-aanvullend mechanisme alleen het historische begin als instappunt. Juist door
-beide te combineren, ontstaat een patroon dat wel levert wat nodig is:
-consistent instappen, efficiënt bijblijven en fouttolerant herstellen.
+aanvullend mechanisme alleen het historische begin als instappunt. Door beide te
+combineren, ontstaat een patroon dat wel levert wat nodig is: consistent
+instappen, efficiënt bijblijven en fouttolerant herstellen.
 
 ## Het snapshots-en-delta's-patroon
 
@@ -66,10 +66,18 @@ Het **snapshots-en-delta's**-patroon werkt met twee parallelle stromen:
    Deze kleine updates bevatten de individuele mutaties (aanmaken, wijzigen,
    verwijderen) die de collectie van de ene naar de andere toestand brengen.
 
-Samen vormen zij het synchronisatiemechanisme. Het patroon is
-transport-agnostisch: het werkt over HTTP (polling of SSE) of via een message
-broker. Over HTTP kan het bovendien een extensie zijn van een bestaande API —
-zonder extra modules of diensten.
+Samen vormen zij het synchronisatiemechanisme. Dit artikel werkt het patroon uit
+voor HTTP — het enige transportmiddel dat federatieve serviceconnectiviteit
+ondersteunt en op de
+["pas toe, leg uit"-lijst van open standaarden](https://www.forumstandaardisatie.nl/open-standaarden/verplicht)
+staat. Concreet: via polling of Server-Sent Events (SSE). Het patroon is
+bovendien een extensie van een bestaande HTTP API, zonder extra modules of
+diensten.
+
+Wanneer interoperabiliteit een gestandaardiseerde event-envelop vereist, sluit
+de structuur van delta's aan op het
+[NLGov-profiel voor CloudEvents](https://gitdocumentatie.logius.nl/publicatie/notificatieservices/cloudevents-nl/1.1/)
+(pas toe, leg uit). Het patroon werkt ook zonder deze extra afhankelijkheid.
 
 Een consumer kan op een recent moment inspringen — niet per se bij het begin.
 Omdat het patroon geen volledige historische replay vereist, hoeft een provider
