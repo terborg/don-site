@@ -7,157 +7,136 @@ tags:
 
 # Paginering van collecties
 
-Vrijwel elke API die een collectie aanbiedt, gebruikt paginering. Een collectie
-is ontsloten op een endpoint, bijvoorbeeld `/documenten`. Een individueel item
-uit die collectie kan daarnaast op een eigen endpoint ontsloten zijn,
-bijvoorbeeld `/documenten/42`.
+Paginering is een patroon om een collectie binnen een REST API (bijvoorbeeld
+`/documenten`) in delen op te halen. Dit is geschikt voor het browsen of
+batchgewijs verwerken van grote hoeveelheden data. Of paginering bruikbaar is,
+hangt af van de benodigde garanties voor de consumer.
 
-Paginering is een patroon om zo'n collectie in delen op te halen. Het is
-geschikt voor het browsen, doorlopen of batchgewijs verwerken van een collectie.
-Of paginering acceptabel is, hangt af van de garanties die een consumer nodig
-heeft.
-
-Er zijn grofweg twee smaken:
-
-- **Offset-based**: de consumer vraagt een pagina op via een positie in de
-  totale lijst, bijvoorbeeld met `offset` of `page`.
-- **Cursor-based / keyset-based**: de consumer volgt een keten van pagina's via
-  een cursor of `next`-verwijzing naar het volgende venster in een vaste
-  sortering.
-
-Met **page skew** bedoelen we dat de inhoud van pagina's tussen opeenvolgende
-requests verschuift doordat records in de tussentijd worden toegevoegd,
-verwijderd of aangepast. Daardoor kan een consumer ongemerkt items dubbel zien
-of juist missen.
+De meest gangbare varianten zijn **offset-based** en **cursor-based** (ook wel
+key-based).
 
 ## Offset-based paginering
 
-De eenvoudigste aanpak is dat een consumer een absoluut startpunt in de
-collectie meegeeft, bijvoorbeeld via `page` of `offset`.
+De consumer geeft een absoluut startpunt op:
 
 ```http
 GET /items?page=2
 GET /items?offset=20&limit=10
 ```
 
-- **Voordelen**: eenvoudig te begrijpen en te implementeren; willekeurige
-  toegang tot een pagina is mogelijk; pagina's kunnen desgewenst parallel worden
-  opgevraagd.
-- **Nadelen**: gevoelig voor page skew bij veranderende data;
-  [inefficiënt op grote datasets](https://www.postgresql.org/docs/current/queries-limit.html)
-  omdat de database eerst de voorgaande rijen moet overslaan.
+De implementatie is eenvoudig en maakt willekeurige paginatoegang (random
+access) en parallel opvragen mogelijk. Twee nadelen: offset-based paginering is
+[traag bij grote datasets](https://www.postgresql.org/docs/current/queries-limit.html)
+(de database moet voorgaande rijen ophalen en overslaan), en gevoelig voor
+**page skew** — muteert de collectie tijdens het pagineren, dan verschuiven
+items over pagina's en ziet de consumer items dubbel of mist ze.
 
-Gebruik dit patroon alleen als:
+Geschikt voor kleine of stabiele collecties waar random access gewenst is en een
+incidenteel gemist of dubbel item acceptabel is. Voor grote of snel muterende
+collecties is cursor-based paginering de betere keuze.
 
-- de collectie klein is;
-- de sortering tijdens het uitlezen stabiel blijft;
-- een consumer expliciet naar pagina 7 of offset 500 moet kunnen springen;
-- incidenteel een dubbel of gemist item geen functioneel probleem is.
+## Cursor-based paginering
 
-Gebruik dit patroon niet als:
-
-- de collectie groot is;
-- de collectie tijdens het uitlezen frequent muteert;
-- de consumer een complete collectie zonder gaten of dubbelen moet verwerken.
-
-## Cursor-based / keyset-based paginering
-
-Bij deze aanpak verwijst elke pagina naar de volgende of vorige pagina. De
-consumer navigeert dus niet op basis van een absolute positie, maar volgt een
-cursor of `next`-link die verwijst naar het volgende venster in een vaste
-sortering.
-
-In query parameters zie je dit vaak terug als een cursor of ankerwaarde:
+De consumer navigeert door een lijst op basis van een referentie (de cursor)
+naar de volgende of vorige pagina:
 
 ```http
-GET /items?after=Q12afE81mx7kLp
+GET /items?limit=25
+GET /items?cursor=Q12afE81mx7kLp&limit=25
 ```
 
-De provider haalt daarna alle items op ná dat ankerpunt. In de response hoort de
-provider de volgende stap terug te geven als een ondoorzichtige cursor of link,
-zodat consumers geen kennis hoeven te hebben van de interne sorteersleutel:
+De eerste aanroep heeft geen cursor; de API geeft de eerste pagina terug. De API
+geeft in het antwoord het actuele deel uit de dataset én de cursor voor de
+volgende stap. Gebruik hiervoor een ondoorzichtige cursor (opaque pointer),
+zodat consumers geen aannames doen over de interne sortering:
 
 ```json
 {
   "items": [...],
-  "next": "A8762JBHW2i7us"
+  "next_cursor": "A8762JBHW2i7us"
 }
 ```
 
-Met een ondoorzichtige cursor bedoelen we een cursor waarvan de interne opbouw
-geen onderdeel is van het contract; consumers horen die alleen terug te sturen
-om de volgende pagina op te vragen.
+Een goede cursor vereist een oplopend, sequentieel id — zoals een
+[UUIDv7](https://www.rfc-editor.org/rfc/rfc9562#name-uuid-version-7) — of een
+combinatie van een (publicatie)datum en uniek id als stabiele, indexeerbare
+sorteersleutel. Cursor-based paginering is efficiënt bij grote datasets en
+robuuster tegen page skew, en past goed bij _infinite scroll_ en
+batchverwerking. Het biedt echter geen willekeurige paginatoegang en een totaal
+aantal resultaten is niet vanzelfsprekend beschikbaar; als de consumer dit nodig
+heeft, is offset-based eenvoudiger.
 
-- **Voordelen**: efficiënt op grote datasets; stabieler bij invoegingen en
-  verwijderingen tussen requests; sluit goed aan op oneindig scrollen of
-  sequentieel batchgewijs uitlezen.
-- **Nadelen**: willekeurige toegang is niet mogelijk; de collectie moet
-  gesorteerd zijn op een stabiele, oplopende sleutel; items die _binnen het
-  huidige venster_ worden verwijderd of bijgewerkt kunnen alsnog gemist of
-  dubbel gezien worden.
+## Paginering vs. dataconsistentie
 
-Geschikte sleutels zijn bijvoorbeeld een oplopend sequentieel id, een
-publicatiedatum in combinatie met een uniek id, of een andere stabiele,
-indexeerbare sorteersleutel die de gewenste volgorde van de collectie volgt.
+Beide methodes zijn **ongeschikt** als dataconsistentie cruciaal is: paginering
+is geen mechanisme voor synchronisatie van collecties. Muteert de collectie
+tijdens of tussen requests? Dan kun je paginering alléén inzetten als een
+incidenteel gemist of dubbel item acceptabel is (bijv. bij een publiek
+nieuwsoverzicht).
 
-Gebruik dit patroon alleen als:
+Voor strikte synchronisatie waarbij elke wijziging betrouwbaar moet doorkomen,
+is een apart synchronisatiepatroon nodig.
 
-- de collectie gelezen wordt in een vaste, stabiele sortering;
-- consumers de collectie vooral sequentieel doorlopen;
-- de collectie groot is of frequent muteert;
-- goede performance belangrijker is dan springen naar een willekeurige pagina.
+| Eigenschap                       | Offset-based                 | Cursor-based / key-based        |
+| -------------------------------- | ---------------------------- | ------------------------------- |
+| Willekeurige toegang             | Ja                           | Nee                             |
+| Totaal aantal resultaten         | Ja                           | Niet vanzelfsprekend            |
+| Schaalbaarheid                   | Beperkt bij grote collecties | Goed                            |
+| Gedrag bij mutaties              | Gevoelig voor page skew      | Robuuster tussen pagina's       |
+| Sorteervolgorde                  | Vrij kiesbaar                | Vaste, stabiele sleutel vereist |
+| Implementatiecomplexiteit        | Laag                         | Hoger                           |
+| Toevoeging aan bestaand endpoint | Opt-in mogelijk              | Vereist breaking change         |
 
-Gebruik dit patroon niet als:
+## Voorbeeld in OpenAPI
 
-- consumers willekeurig naar pagina's moeten kunnen springen;
-- er geen stabiele, unieke en indexeerbare sorteersleutel bestaat;
-- de data tussen requests kan veranderen en de consumer een consistente,
-  volledige uitlezing nodig heeft;
-- de business verwacht dat een gepagineerde leesactie op zichzelf al een
-  volledige en consistente momentopname oplevert.
+```yaml
+paths:
+  /items:
+    get:
+      summary: Haal een pagina van items op
+      parameters:
+        - name: cursor
+          in: query
+          required: false
+          description:
+            Ondoorzichtige verwijzing naar de huidige positie in de dataset
+            (opaque pointer). Weglaten geeft de eerste pagina terug. De waarde
+            mag niet geïnterpreteerd of zelf samengesteld worden door de
+            consumer.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description:
+            Maximum aantal items per pagina. De API hanteert een eigen default
+            en maximum; een lagere waarde is altijd mogelijk.
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Pagina van items
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - next_cursor
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Item"
+                  next_cursor:
+                    type: string
+                    nullable: true
+                    description:
+                      Cursor voor de volgende pagina. Null als er geen volgende
+                      pagina meer is.
+```
 
-Deze aanpak wordt breed toegepast in moderne API-richtlijnen. De
-[RESTful API Guidelines van Zalando](https://opensource.zalando.com/restful-api-guidelines/#pagination)
-adviseren bijvoorbeeld om cursor-based paginering te verkiezen boven
-offset-based paginering voor grote of veranderlijke collecties.
+## Referenties
 
-## Wanneer welk patroon acceptabel is
-
-De kernvraag is niet welk patroon moderner oogt, maar welke garanties een
-consumer nodig heeft.
-
-- Kies **offset-based paginering** alleen als gebruiksgemak en willekeurige
-  toegang belangrijker zijn dan strikte stabiliteit en schaalbaarheid.
-- Kies **cursor-based / keyset-based paginering** alleen als de collectie groot
-  of veranderlijk is en consumers vooral vooruit of achteruit door de resultaten
-  bewegen.
-- Kies **geen van beide** als de data tussen requests kan veranderen en de
-  consumer een consistente, volledige uitlezing nodig heeft.
-- Kies **geen van beide als synchronisatiepatroon**. Gebruik paginering nooit
-  voor het synchroniseren van data wanneer een consumer een complete,
-  consistente kopie van een muterende collectie moet opbouwen of bijhouden.
-
-Paginering is dus alleen geschikt voor het gefaseerd uitlezen van een collectie,
-en niet als vervanging voor een synchronisatieprotocol. Zodra data tussen
-requests kan veranderen, gebruik je paginering alleen als gemiste of dubbele
-items binnen het gebruiksdoel acceptabel zijn. Voor synchronisatie is dat nooit
-acceptabel. Voor collecties waarbij ook wijzigingen binnen het venster
-betrouwbaar verwerkt moeten worden, zie
-[Synchroniseren van resourcecollecties](./synchroniseren-van-resourcecollecties.md).
-
-Samengevat:
-
-| Eigenschap                | Offset-based                 | Cursor-based / keyset-based     |
-| ------------------------- | ---------------------------- | ------------------------------- |
-| Willekeurige toegang      | Ja                           | Nee                             |
-| Schaalbaarheid            | Beperkt bij grote collecties | Goed                            |
-| Gedrag bij mutaties       | Gevoelig voor page skew      | Robuuster tussen pagina's       |
-| Sorteervolgorde           | Vrij kiesbaar                | Vaste, stabiele sleutel vereist |
-| Implementatiecomplexiteit | Laag                         | Hoger                           |
-
-## Gerelateerde patronen
-
-- Voor het ophalen én daarna actueel houden van een collectie via delta's, zie
-  [Synchroniseren van resourcecollecties](./synchroniseren-van-resourcecollecties.md).
-- Voor betrouwbare publicatie van wijzigingen aan de providerzijde, zie
-  <!-- [Transactionele outbox](./transactionele-outbox.md). -->
+- [Swiss Federal Administration API Guidelines — Pagination](https://github.com/swiss/api-guidelines/blob/main/README.md#12-rest-design---pagination)

@@ -6,7 +6,7 @@ tags:
   - eda
 ---
 
-# Synchroniseren van resourcecollecties
+# Synchroniseren van collecties
 
 In gedistribueerde systemen hebben consumers vaak behoefte aan een actuele,
 lokale kopie (een _mirror_ of _read model_) van een resourcecollectie (een
