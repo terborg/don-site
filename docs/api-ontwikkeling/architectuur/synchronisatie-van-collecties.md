@@ -71,8 +71,8 @@ werkt met twee parallelle stromen:
 
 De kern van het patroon is
 **[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency)**:
-elke consumer die een snapshot neemt en de delta-keten daarna volledig volgt,
-eindigt gegarandeerd in dezelfde toestand.
+elke consumer die bij een willekeurig snapshot begint en de delta-keten daarna
+volledig volgt, eindigt gegarandeerd in dezelfde toestand.
 
 Samen vormen zij het synchronisatiemechanisme. Dit artikel werkt het patroon uit
 voor HTTP — het enige transportmiddel dat federatieve serviceconnectiviteit
