@@ -85,7 +85,7 @@ is een apart synchronisatiepatroon nodig.
 | Gedrag bij mutaties              | Gevoelig voor page skew      | Robuuster tussen pagina's       |
 | Sorteervolgorde                  | Vrij kiesbaar                | Vaste, stabiele sleutel vereist |
 | Implementatiecomplexiteit        | Laag                         | Hoger                           |
-| Toevoeging aan bestaand endpoint | Opt-in mogelijk              | Vereist breaking change         |
+| Toevoeging aan bestaand endpoint | Non-breaking mogelijk        | Mogelijk, maar niet eenvoudig   |
 
 ## Voorbeeld in OpenAPI
 
