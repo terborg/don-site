@@ -6,10 +6,14 @@ sidebar_position: 4
 
 ## Notificaties
 
-Alles begint met een signaal. De Notificatie-service zorgt dat inwoners een
-seintje krijgen (bijvoorbeeld via e-mail of app) dat er iets voor hen
-klaarstaat. Dit verwijst vaak naar MijnBerichten, de inbox voor formele post en
-meldingen, vergelijkbaar met de Berichtenbox van MijnOverheid.
+Deze service zorgt ervoor dat inwoners en ondernemers een notificatie ontvangen
+als er bijvoorbeeld een nieuw bericht of een nieuwe taak voor ze klaarstaat, of
+als er iets is veranderd in de status van hun aanvraag. Met deze service
+integreert u vereisten van de Wet modernisering elektronisch bestuurlijk verkeer
+(Wmebv).
+
+Dit verwijst vaak naar MijnBerichten, de inbox voor formele post en meldingen,
+vergelijkbaar met de Berichtenbox van MijnOverheid.
 
 ### Zekerheid en bevestiging
 
@@ -49,3 +53,8 @@ Digitaal contact moet drempels wegnemen, niet opwerpen.
 DigiD, eHerkenning, itsme, etc.
 
 ## Profielen
+
+Via de MijnProfiel-service kunnen onder andere persoonlijke voorkeuren voor
+contact met overheidsorganisaties worden beheerd. Denk bijvoorbeeld aan
+kanaalvoorkeuren van de inwoner of ondernemer. Willen ze digitaal of per brief
+op de hoogte worden gehouden?

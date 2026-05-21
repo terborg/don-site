@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-agenda.svg
 ---
@@ -21,7 +21,9 @@ ontwikkeld. Inwoners of ondernemers die via een digitaal authenticatiemiddel
 gemaakte afspraken ook hierin terugzien.
 
 De MijnAgenda service biedt voorlopig alleen de functie voor het tonen van de
-afspraken. Het kunnen maken, aanpassen of annuleren van afspraken wordt op een later moment toegevoegd. Ook is de service alleen nog voor burgers die hun eigen afspraken willen inzien.
+afspraken. Het kunnen maken, aanpassen of annuleren van afspraken wordt op een
+later moment toegevoegd. Ook is de service alleen nog voor burgers die hun eigen
+afspraken willen inzien.
 
 ## Uitgangspunten
 
@@ -53,7 +55,9 @@ afspraken. Het kunnen maken, aanpassen of annuleren van afspraken wordt op een l
   geleverd.
 - Aanmaken, wijzigen of annuleren van een afspraak gebeurt in het
   afsprakensysteem.
-- Alleen eigen afspraken die betrekking hebben op de inwoner worden aan de inwoner getoond in de MijnOmgeving. Afspraken m.b.t. ondernemers wordt later ontwikkeld.
+- Alleen eigen afspraken die betrekking hebben op de inwoner worden aan de
+  inwoner getoond in de MijnOmgeving. Afspraken m.b.t. ondernemers wordt later
+  ontwikkeld.
 - Het tonen van de afspraken in een KCC-applicatie wordt later ontwikkeld.
 - Het opgegeven e-mailadres wordt gebruikt om afspraken aan een inwoner te
   koppelen nadat de inwoner via DigiD in de MijnOmgeving is ingelogd.
@@ -74,86 +78,108 @@ afspraken. Het kunnen maken, aanpassen of annuleren van afspraken wordt op een l
 
 #### Doel
 
-Deze use case beschrijft hoe een inwoner zijn of haar agenda-afspraken bij een overheidsorganisatie kan raadplegen in de MijnOmgeving. De inwoner kan zowel een overzicht van afspraken (verleden en toekomst) bekijken als de detailgegevens van een specifieke afspraak inzien.
+Deze use case beschrijft hoe een inwoner zijn of haar agenda-afspraken bij een
+overheidsorganisatie kan raadplegen in de MijnOmgeving. De inwoner kan zowel een
+overzicht van afspraken (verleden en toekomst) bekijken als de detailgegevens
+van een specifieke afspraak inzien.
 
 #### Scope
 
-| Attribuut | Waarde |
-| --- | --- |
-| **In scope** | Het tonen van het overzicht en de detailgegevens van agenda-afspraken van een inwoner in de MijnOmgeving van een overheidsorganisatie. |
+| Attribuut        | Waarde                                                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **In scope**     | Het tonen van het overzicht en de detailgegevens van agenda-afspraken van een inwoner in de MijnOmgeving van een overheidsorganisatie.                                            |
 | **Out of scope** | Aanmaken, wijzigen of annuleren van een afspraak (gebeurt in het afsprakensysteem). Het tonen van afspraken van ondernemers (KvK). Het tonen van afspraken in een KCC-applicatie. |
-| **Niveau** | Gebruikersdoel (user goal level) |
+| **Niveau**       | Gebruikersdoel (user goal level)                                                                                                                                                  |
 
 #### Preconditions
 
-1. De inwoner beschikt over een geldig sterk identificatiemiddel (DigiD, eIDAS 1.0 of EUDI Wallet).
-2. De inwoner is succesvol ingelogd op de MijnOmgeving van de overheidsorganisatie, waardoor het BSN bekend is.
-3. In het Profiel (MijnGegevens) van de inwoner zijn geverifieerde e-mailadressen aanwezig.
-4. De MijnOmgeving heeft via OAuth 2.0 een geldig toegangstoken voor de MijnAgenda-API.
-5. Het afsprakensysteem van de overheidsorganisatie is bereikbaar en operationeel.
+1. De inwoner beschikt over een geldig sterk identificatiemiddel (DigiD, eIDAS
+   1.0 of EUDI Wallet).
+2. De inwoner is succesvol ingelogd op de MijnOmgeving van de
+   overheidsorganisatie, waardoor het BSN bekend is.
+3. In het Profiel (MijnGegevens) van de inwoner zijn geverifieerde
+   e-mailadressen aanwezig.
+4. De MijnOmgeving heeft via OAuth 2.0 een geldig toegangstoken voor de
+   MijnAgenda-API.
+5. Het afsprakensysteem van de overheidsorganisatie is bereikbaar en
+   operationeel.
 
 #### Postconditions
 
 ##### Succesvolle afronding
 
-- De inwoner heeft een overzicht gezien van de aan hem/haar gekoppelde, niet-geannuleerde agenda-afspraken (zowel toekomstig als historisch).
-- Indien geselecteerd: de inwoner heeft de detailgegevens van een specifieke afspraak gezien (minimaal datum, tijdstip, locatie en onderwerp).
+- De inwoner heeft een overzicht gezien van de aan hem/haar gekoppelde,
+  niet-geannuleerde agenda-afspraken (zowel toekomstig als historisch).
+- Indien geselecteerd: de inwoner heeft de detailgegevens van een specifieke
+  afspraak gezien (minimaal datum, tijdstip, locatie en onderwerp).
 - Er zijn geen mutaties uitgevoerd op het afsprakensysteem.
 
 ##### Mislukte afronding
 
-- De inwoner ziet een passende foutmelding of een leeg overzicht. De staat van het afsprakensysteem is ongewijzigd.
+- De inwoner ziet een passende foutmelding of een leeg overzicht. De staat van
+  het afsprakensysteem is ongewijzigd.
 
 #### Trigger
 
-De inwoner navigeert in de MijnOmgeving naar het onderdeel "Mijn afspraken" (of equivalent).
+De inwoner navigeert in de MijnOmgeving naar het onderdeel "Mijn afspraken" (of
+equivalent).
 
 #### Basisflow overzicht
 
 ![Inwoner-MijnAgenda.svg](Inwoner-MijnAgenda.svg)
 
-| Stap | Handeling |
-| --- | --- |
-| 1 | De klikt op MijnAgenda. |
-| 2 | De geverifieerde e-mailadressen van de inwoner worden uit het Profiel (MijnGegevens) gehaald op basis van het BSN. |
-| 3 | De geverifieerde e-mailadressen worden gebruikt als zoekcriterium om afspraken op te vragen. |
-| 4 | Als er afspraken gevonden zijn, worden deze getoond in het overzicht. |
-| 5 | De afspraken zijn getoond. |
-| 6 | Als er geen afspraken gevonden zijn, wordt er een melding getoond. |
-| 7 | De melding is getoond. |
+| Stap | Handeling                                                                                                          |
+| ---- | ------------------------------------------------------------------------------------------------------------------ |
+| 1    | De klikt op MijnAgenda.                                                                                            |
+| 2    | De geverifieerde e-mailadressen van de inwoner worden uit het Profiel (MijnGegevens) gehaald op basis van het BSN. |
+| 3    | De geverifieerde e-mailadressen worden gebruikt als zoekcriterium om afspraken op te vragen.                       |
+| 4    | Als er afspraken gevonden zijn, worden deze getoond in het overzicht.                                              |
+| 5    | De afspraken zijn getoond.                                                                                         |
+| 6    | Als er geen afspraken gevonden zijn, wordt er een melding getoond.                                                 |
+| 7    | De melding is getoond.                                                                                             |
 
 #### Basisflow specifieke afspraak
 
 ![Inwoner-Specifieke-afspraak.svg](Inwoner-Specifieke-afspraak.svg)
 
-| Stap | Handeling |
-| --- | --- |
-| 1 | De inwoner klikt op een specifieke afspraak. |
-| 2 | De gegevens van de specifieke afspraak worden opgehaald. |
-| 3 | De gegevens van de specifieke afspraak worden getoond. |
-| 4 | De gegevens van de specifieke afspraak zijn getoond. |
+| Stap | Handeling                                                |
+| ---- | -------------------------------------------------------- |
+| 1    | De inwoner klikt op een specifieke afspraak.             |
+| 2    | De gegevens van de specifieke afspraak worden opgehaald. |
+| 3    | De gegevens van de specifieke afspraak worden getoond.   |
+| 4    | De gegevens van de specifieke afspraak zijn getoond.     |
 
 #### Uitzonderingsscenario's (Exception Flows)
 
 ##### E1 — Authenticatie verlopen
 
-- **Op elk moment**: Het OAuth 2.0 toegangstoken of de sessie van de inwoner is verlopen.
-- **Vervolg**: De MijnOmgeving verzoekt de inwoner opnieuw in te loggen via DigiD. Na succesvolle herauthenticatie wordt de use case hervat vanaf stap 3.
+- **Op elk moment**: Het OAuth 2.0 toegangstoken of de sessie van de inwoner is
+  verlopen.
+- **Vervolg**: De MijnOmgeving verzoekt de inwoner opnieuw in te loggen via
+  DigiD. Na succesvolle herauthenticatie wordt de use case hervat vanaf stap 3.
 
 ##### E2 — Afsprakensysteem niet bereikbaar
 
-- **Bij stap 6 of stap 11**: Het afsprakensysteem is niet beschikbaar of reageert niet binnen de geldende time-out.
-- **Vervolg**: De MijnAgenda-API retourneert een passende foutcode. De MijnOmgeving toont de melding "Uw afspraken kunnen op dit moment niet worden opgehaald. Probeer het later opnieuw." De use case eindigt zonder succes.
+- **Bij stap 6 of stap 11**: Het afsprakensysteem is niet beschikbaar of
+  reageert niet binnen de geldende time-out.
+- **Vervolg**: De MijnAgenda-API retourneert een passende foutcode. De
+  MijnOmgeving toont de melding "Uw afspraken kunnen op dit moment niet worden
+  opgehaald. Probeer het later opnieuw." De use case eindigt zonder succes.
 
 ##### E3 — Autorisatie geweigerd
 
-- **Bij stap 5 of stap 10**: De OAuth 2.0 autorisatie wordt geweigerd door de MijnAgenda-API (bijv. ontbrekende of onjuiste scope).
-- **Vervolg**: De MijnOmgeving logt het incident en toont een algemene foutmelding aan de inwoner. De use case eindigt zonder succes.
+- **Bij stap 5 of stap 10**: De OAuth 2.0 autorisatie wordt geweigerd door de
+  MijnAgenda-API (bijv. ontbrekende of onjuiste scope).
+- **Vervolg**: De MijnOmgeving logt het incident en toont een algemene
+  foutmelding aan de inwoner. De use case eindigt zonder succes.
 
 ##### E4 — Onverwachte fout bij ophalen detailgegevens
 
-- **Bij stap 11**: Bij het ophalen van de detailgegevens treedt een fout op (bijv. afspraak is inmiddels geannuleerd of verwijderd).
-- **Vervolg**: De MijnOmgeving toont een melding dat de afspraak niet meer beschikbaar is en keert terug naar het overzicht. Het overzicht wordt opnieuw opgehaald.
+- **Bij stap 11**: Bij het ophalen van de detailgegevens treedt een fout op
+  (bijv. afspraak is inmiddels geannuleerd of verwijderd).
+- **Vervolg**: De MijnOmgeving toont een melding dat de afspraak niet meer
+  beschikbaar is en keert terug naar het overzicht. Het overzicht wordt opnieuw
+  opgehaald.
 
 ## Architectuur
 
@@ -194,7 +220,9 @@ mogelijk andere benamingen gebruikt.
 
 In onderstaand bedrijfsobjectenmodel staat de kern ‘AGENDA-AFSPRAAK’ centraal.
 Aan de bovenkant daarvan zijn bedrijfsobjecten die het onderwerp van de
-agenda-afspraak kunnen zijn of waarvan de agenda-afspraak het onderwerp is. Deze vallen voor de huidige uitwerking nog buiten scope. Aan de onderkant zijn de personen opgenomen die betrokken kunnen zijn bij een agenda-afspraak.
+agenda-afspraak kunnen zijn of waarvan de agenda-afspraak het onderwerp is. Deze
+vallen voor de huidige uitwerking nog buiten scope. Aan de onderkant zijn de
+personen opgenomen die betrokken kunnen zijn bij een agenda-afspraak.
 
 ![Bedrijfsobjectenmodel-MijnAgenda.svg](Bedrijfsobjectenmodel-MijnAgenda.svg)
 
