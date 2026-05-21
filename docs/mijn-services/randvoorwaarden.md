@@ -4,6 +4,10 @@ sidebar_position: 4
 
 # Randvoorwaarden
 
+## Identity provider
+
+DigiD, eHerkenning, itsme, etc.
+
 ## Notificaties
 
 Deze service zorgt ervoor dat inwoners en ondernemers een notificatie ontvangen
@@ -14,6 +18,13 @@ integreert u vereisten van de Wet modernisering elektronisch bestuurlijk verkeer
 
 Dit verwijst vaak naar MijnBerichten, de inbox voor formele post en meldingen,
 vergelijkbaar met de Berichtenbox van MijnOverheid.
+
+## Profielen
+
+Via de MijnProfiel-service kunnen onder andere persoonlijke voorkeuren voor
+contact met overheidsorganisaties worden beheerd. Denk bijvoorbeeld aan
+kanaalvoorkeuren van de inwoner of ondernemer. Willen ze digitaal of per brief
+op de hoogte worden gehouden?
 
 ### Zekerheid en bevestiging
 
@@ -47,14 +58,3 @@ Digitaal contact moet drempels wegnemen, niet opwerpen.
   krijgt binnen 5 werkdagen antwoord") om onnodig bellen te voorkomen.
 - Context: Toon een gestelde vraag direct in de tijdlijn van contactmomenten als
   bevestiging dat deze is verstuurd
-
-## Identity provider
-
-DigiD, eHerkenning, itsme, etc.
-
-## Profielen
-
-Via de MijnProfiel-service kunnen onder andere persoonlijke voorkeuren voor
-contact met overheidsorganisaties worden beheerd. Denk bijvoorbeeld aan
-kanaalvoorkeuren van de inwoner of ondernemer. Willen ze digitaal of per brief
-op de hoogte worden gehouden?
