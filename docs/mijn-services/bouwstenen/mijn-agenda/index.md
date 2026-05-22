@@ -1,5 +1,6 @@
 ---
 sidebar_position: 10
+description: Een overzicht van geplande afspraken met overheidsorganisaties.
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-agenda.svg
 ---
@@ -140,7 +141,7 @@ equivalent).
 
 | Stap | Handeling                                                                                                          |
 | ---- | ------------------------------------------------------------------------------------------------------------------ |
-| 1    | De inwoner klikt op MijnAgenda.                                                                                            |
+| 1    | De inwoner klikt op MijnAgenda.                                                                                    |
 | 2    | De geverifieerde e-mailadressen van de inwoner worden uit het Profiel (MijnGegevens) gehaald op basis van het BSN. |
 | 3    | De geverifieerde e-mailadressen worden gebruikt als zoekcriterium om afspraken op te vragen.                       |
 | 4    | Als er afspraken gevonden zijn, worden deze getoond in het overzicht.                                              |

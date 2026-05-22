@@ -1,0 +1,15 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Stop Docusaurus",
+            "type": "shell",
+            "command": "kill -9 $(pgrep -f 'docusaurus.mjs start') 2>/dev/null || true",
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

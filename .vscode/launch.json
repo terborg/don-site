@@ -15,7 +15,8 @@
                 "0.0.0.0"
             ],
             "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "preLaunchTask": "Stop Docusaurus"
         }
     ]
 }
