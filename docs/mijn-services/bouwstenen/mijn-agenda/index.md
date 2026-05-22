@@ -130,7 +130,7 @@ equivalent).
 
 | Stap | Handeling                                                                                                          |
 | ---- | ------------------------------------------------------------------------------------------------------------------ |
-| 1    | De klikt op MijnAgenda.                                                                                            |
+| 1    | De inwoner klikt op MijnAgenda.                                                                                            |
 | 2    | De geverifieerde e-mailadressen van de inwoner worden uit het Profiel (MijnGegevens) gehaald op basis van het BSN. |
 | 3    | De geverifieerde e-mailadressen worden gebruikt als zoekcriterium om afspraken op te vragen.                       |
 | 4    | Als er afspraken gevonden zijn, worden deze getoond in het overzicht.                                              |
