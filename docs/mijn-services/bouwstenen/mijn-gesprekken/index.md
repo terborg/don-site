@@ -2,7 +2,7 @@
 sidebar_position: 12
 description: Een overzicht van gevoerde gesprekken met overheidsorganisaties.
 sidebar_custom_props:
-  icon: /img/mijn-services/icons/mijn-gesprek.svg
+  icon: /img/mijn-services/icons/mijn-gesprekken.svg
 ---
 
 # MijnGesprekken
