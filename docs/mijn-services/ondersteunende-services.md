@@ -2,11 +2,11 @@
 sidebar_position: 4
 ---
 
-# Basisbouwstenen
+# Ondersteunende services
 
 Om de interactiebouwstenen te kunnen gebruiken, is een fundament nodig. Deze
-pagina beschrijft de generieke basisbouwstenen. Elke basisbouwsteen krijgt op
-termijn een eigen pagina.
+pagina beschrijft de generieke ondersteunende services. Elke ondersteunende
+service krijgt op termijn een eigen pagina.
 
 ## Profielservice
 
@@ -34,7 +34,7 @@ van de Wet modernisering elektronisch bestuurlijk verkeer (Wmebv).
 In theorie kan elke bouwsteen notificaties triggeren — of dat zinvol is, is per
 bouwsteen een inhoudelijke keuze.
 
-**Effectieve notificaties**
+### Effectieve notificaties
 
 Het openen van een bericht staat of valt met de relevantie en herkenbaarheid.
 
@@ -45,7 +45,7 @@ Het openen van een bericht staat of valt met de relevantie en herkenbaarheid.
 - Phishing-bewustzijn: gebruikers zijn alert op phishing. Leg in e-mails uit
   waarom er géén klikbare link in staat en verwijs naar het portaal.
 
-**Zekerheid en bevestiging**
+### Zekerheid en bevestiging
 
 - Bevestigingsmails zijn essentieel: na het afronden van een taak (zoals
   betalen) wordt een e-mailbevestiging gezien als noodzakelijk bewijsmateriaal.
