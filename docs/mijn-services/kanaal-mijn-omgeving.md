@@ -2,7 +2,7 @@
 sidebar_position: 3
 ---
 
-# MijnOmgeving
+# Kanaal: MijnOmgeving
 
 Een MijnOmgeving is één van de kanalen waarbinnen MijnServices worden aangeboden
 — naast kanalen als het KCC en de balie. Het is een ingelogde digitale omgeving

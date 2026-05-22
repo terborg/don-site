@@ -2,11 +2,11 @@
 sidebar_position: 4
 ---
 
-# Randvoorwaarden
+# Basisbouwstenen
 
-Om de bouwstenen te kunnen gebruiken zijn een aantal diensten nodig. Deze pagina
-beschrijft de generieke randvoorwaarden. Elke randvoorwaarde verdient op termijn
-een eigen pagina.
+Om de interactiebouwstenen te kunnen gebruiken, is een fundament nodig. Deze
+pagina beschrijft de generieke basisbouwstenen. Elke basisbouwsteen krijgt op
+termijn een eigen pagina.
 
 ## Profielservice
 
