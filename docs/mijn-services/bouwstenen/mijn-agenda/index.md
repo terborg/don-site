@@ -13,6 +13,9 @@ veranderen.
 
 :::
 
+MijnAgenda is een service waarmee inwoners en ondernemers hun geplande afspraken
+met overheidsorganisaties kunnen inzien.
+
 Voor sommige producten of diensten van een gemeente is een afspraak met een
 overheidsorganisatie nodig. Overheidsorganisaties bieden een webomgeving (via
 een afsprakensysteem) aan waarmee inwoners of ondernemers een afspraak kunnen
