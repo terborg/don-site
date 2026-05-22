@@ -1,5 +1,6 @@
 ---
 sidebar_position: 8
+draft: true
 description: Mogelijke proactieve acties voor inwoners en ondernemers.
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-acties.svg

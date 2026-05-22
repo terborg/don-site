@@ -1,5 +1,6 @@
 ---
 sidebar_position: 5
+draft: true
 description: Een overzicht van contactmomenten over een specifieke zaak.
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-contactmomenten.svg

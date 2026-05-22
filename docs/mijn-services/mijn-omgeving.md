@@ -13,7 +13,11 @@ eigen MijnOmgeving aanbieden — opgebouwd uit dezelfde MijnServices.
 
 ## NL Design System
 
-_Volgt._
+Een MijnOmgeving is een visueel product dat door inwoners en ondernemers direct
+wordt gebruikt. Om herkenbaar en toegankelijk te zijn, wordt gebruik gemaakt van
+het [NL Design System](/communities/nl-design-system). Dit zorgt voor een
+consistente look & feel die aansluit bij de verwachtingen van gebruikers —
+ongeacht welke gemeente of overheidsorganisatie de MijnOmgeving aanbiedt.
 
 ## Identity provider
 
