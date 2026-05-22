@@ -6,6 +6,13 @@ sidebar_custom_props:
 
 # MijnAgenda
 
+:::info[MijnAgenda is in ontwikkeling]
+
+Deze pagina beschrijft een standaard die nog in ontwikkeling is. De inhoud kan
+veranderen.
+
+:::
+
 Voor sommige producten of diensten van een gemeente is een afspraak met een
 overheidsorganisatie nodig. Overheidsorganisaties bieden een webomgeving (via
 een afsprakensysteem) aan waarmee inwoners of ondernemers een afspraak kunnen

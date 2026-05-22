@@ -7,5 +7,12 @@ sidebar_custom_props:
 
 # MijnTaken
 
+:::info[MijnTaken is in ontwikkeling]
+
+Deze pagina beschrijft een standaard die nog in ontwikkeling is. De inhoud kan
+veranderen.
+
+:::
+
 MijnTaken is een actie die de inwoner moet uitvoeren en die meestal vanuit het
 overheidsportaal plaatsvindt.

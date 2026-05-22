@@ -7,5 +7,12 @@ sidebar_custom_props:
 
 # MijnZaken
 
+:::info[MijnZaken is in ontwikkeling]
+
+Deze pagina beschrijft een standaard die nog in ontwikkeling is. De inhoud kan
+veranderen.
+
+:::
+
 MijnZaken is een track & trace-service waarmee inwoners en ondernemers hun
 lopende zaken bij uw organisatie kunnen volgen.

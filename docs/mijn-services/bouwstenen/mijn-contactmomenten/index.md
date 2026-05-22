@@ -7,5 +7,12 @@ sidebar_custom_props:
 
 # MijnContactmomenten
 
+:::info[MijnContactmomenten is in ontwikkeling]
+
+Deze pagina beschrijft een standaard die nog in ontwikkeling is. De inhoud kan
+veranderen.
+
+:::
+
 Deze service geeft een overzicht van contactmomenten tussen gemeenten en inwoner
 of ondernemer over een specifieke zaak.
