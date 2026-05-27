@@ -19,8 +19,9 @@ veranderen.
 MijnZaken geeft inwoners en ondernemers inzicht in hun lopende en afgeronde
 zaken — een vergunningaanvraag, een bezwaar, een melding — van een overzicht op
 hoofdlijnen tot een volledig dossier met status, voortgang en documenten.
-Daarmee is het de track & trace voor lopende zaken én het vertrekpunt voor
-vervolgstappen zoals taken, acties en contactmomenten.
+Daarmee is MijnZaken de track & trace voor lopende zaken. Het vormt een vast
+aanknopingspunt voor andere services (zoals contactmomenten en gesprekken) en
+voor vervolgstappen (zoals taken).
 
 ## Stand van zaken en vervolgstappen
 

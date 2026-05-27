@@ -2,7 +2,7 @@
 sidebar_position: 2
 ---
 
-# Interactiepatronen uit klantreizen
+# Interactiepatronen in klantreizen
 
 Een inwoner die een parkeervergunning aanvraagt bij de gemeente, moet diezelfde
 logica herkennen wanneer zij een toeslag aanvraagt bij de Belastingdienst. Toch
