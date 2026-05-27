@@ -1,8 +1,8 @@
 ---
 sidebar_position: 2
 description: >
-  De zaakdossier-bouwsteen van de MijnOmgeving: inzicht in lopende en afgeronde
-  zaken én de context voor taken, acties en contactmomenten.
+  De klantgerichte bouwsteen van de MijnOmgeving voor inzicht in lopende en
+  afgeronde zaken én de context voor taken, acties en contactmomenten.
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-zaken.svg
 ---
@@ -16,14 +16,19 @@ veranderen.
 
 :::
 
-MijnZaken geeft inwoners en ondernemers inzicht in hun lopende en afgeronde
-zaken — een vergunningaanvraag, een bezwaar, een melding — van een overzicht op
-hoofdlijnen tot een volledig dossier met status, voortgang en documenten.
-Daarmee is MijnZaken de track & trace voor lopende zaken. Het vormt een vast
-aanknopingspunt voor andere services (zoals contactmomenten en gesprekken) en
-voor vervolgstappen (zoals taken).
+MijnZaken biedt inwoners en ondernemers een klantgerichte weergave van hun
+lopende en afgeronde zaken. Het vormt een vast aanknopingspunt voor andere
+services (zoals contactmomenten en gesprekken) en voor vervolgstappen (zoals
+taken).
 
-## Stand van zaken en vervolgstappen
+## Doel
+
+Het doel van MijnZaken is inwoners en ondernemers context te bieden bij hun
+lopende en afgeronde zaken. MijnZaken geeft inzicht in status, voortgang,
+documenten en vervolgstappen, zodat duidelijk is wat er is gebeurd, waar een
+zaak staat en wat er eventueel nog verwacht wordt.
+
+## Use cases
 
 Inwoners en ondernemers willen op elk moment weten waar hun zaken staan, wat er
 al is gebeurd, en wat er nog van hen wordt verwacht. De use cases hieronder
