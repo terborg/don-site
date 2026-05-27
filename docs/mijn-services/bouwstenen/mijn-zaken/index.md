@@ -1,8 +1,8 @@
 ---
 sidebar_position: 2
 description: >
-  De klantgerichte bouwsteen van de MijnOmgeving voor inzicht in lopende en
-  afgeronde zaken én de context voor taken, acties en contactmomenten.
+  MijnZaken is de track & trace voor lopende en afgeronde zaken van inwoners en
+  ondernemers.
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-zaken.svg
 ---
@@ -16,10 +16,9 @@ veranderen.
 
 :::
 
-MijnZaken biedt inwoners en ondernemers een klantgerichte weergave van hun
-lopende en afgeronde zaken. Het vormt een vast aanknopingspunt voor andere
-services (zoals contactmomenten en gesprekken) en voor vervolgstappen (zoals
-taken).
+MijnZaken is de track & trace voor lopende en afgeronde zaken van inwoners en
+ondernemers. Het vormt een vast aanknopingspunt voor andere services (zoals
+contactmomenten en gesprekken) en voor vervolgstappen (zoals taken).
 
 ## Doel
 
