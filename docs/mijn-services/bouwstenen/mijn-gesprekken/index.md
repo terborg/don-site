@@ -51,8 +51,6 @@ uitgangspunten en ontwerpprincipes:
   zoveel mogelijk de al gedefinieerde API’s (zoals de Klantinteracties API) voor
   het vastleggen van klantcontacten en gesprekken.
 
-## NL Design System
-
 ## Use cases
 
 1. _Informatievragen:_ Een inwoner wil weten “Heb ik een parkeervergunning nodig

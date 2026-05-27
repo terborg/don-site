@@ -98,8 +98,8 @@ hier links naar info-model dat hierbij hoort
 ## Architectuur en standaarden
 
 In aanvulling op de algemene
-[architectuur en standaarden](../../architectuur-en-standaarden) beschrijft deze
-sectie de ontwerpkeuzes
+[architectuur en standaarden](../../architectuur-en-standaarden/) beschrijft
+deze sectie de ontwerpkeuzes
 
 .. diverse links naar secties binnen de architectuur en standaarden, zoals
 bedrijfsobjectenmodel, conceptueel informatiemodel, etc.

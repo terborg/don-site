@@ -77,12 +77,6 @@ afspraken willen inzien.
   afspraak in een MijnOmgeving getoond. (voorbeeld hiervan
   [https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-klant/master/src/openklant/components/klantinteracties/openapi.yaml](https://redocly.github.io/redoc/?url=https://raw.githubusercontent.com/maykinmedia/open-klant/master/src/openklant/components/klantinteracties/openapi.yaml)).
 
-## NL Design System
-
-- Door het NL Design System te benoemen
-- Documentatie is te vinden op onder andere
-  [https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen](https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen)
-
 ## Use cases
 
 ### UC-01: Raadplegen agenda-afspraken door inwoner
@@ -293,23 +287,6 @@ context meegenomen in het model.
 | Profiel                                          | Dataobject          | Bevat persoonsgegevens van een klant die nodig zijn voor de communicatie tussen de klant en de overheidsorganisatie. Dit zijn zowel de contactgegevens (zoals e-mailadres of mobiele telefoonnummer) als de kanaalvoorkeuren (zoals e-mail, SMS of post) waarover de communicatie tussen de klant en de overheidsorganisaties plaatsvindt. |
 
 ## Standaarden
-
-MijnAgenda hanteert de volgende standaarden:
-
-- Nederlandse API strategie
-  ([https://docs.geostandaarden.nl/api/API-Strategie/](https://docs.geostandaarden.nl/api/API-Strategie/))
-- NLGov REST API Design Rules 2.1.0
-  ([https://gitdocumentatie.logius.nl/publicatie/api/adr/2.1.0/](https://gitdocumentatie.logius.nl/publicatie/api/adr/2.1.0/))
-- NL GOV Assurance profile for OAuth 2.0 v1.1.0
-  ([https://gitdocumentatie.logius.nl/publicatie/api/oauth/](https://gitdocumentatie.logius.nl/publicatie/api/oauth/))
-- OpenAPI Specifications 3.0
-  ([https://www.forumstandaardisatie.nl/open-standaarden/openapi-specification](https://www.forumstandaardisatie.nl/open-standaarden/openapi-specification))
-- Digikoppeling Koppelvlakstandaard REST-API 3.0.1 (indien van toepassing)
-  ([https://gitdocumentatie.logius.nl/publicatie/dk/restapi/3.0.1/](https://gitdocumentatie.logius.nl/publicatie/dk/restapi/3.0.1/))
-- Metamodel Informatiemodellering
-  [https://www.geonovum.nl/geo-standaarden/metamodel-informatiemodellering-mim](https://www.geonovum.nl/geo-standaarden/metamodel-informatiemodellering-mim)
-- Federatieve Service Connectiviteit
-  ([https://fsc-standaard.nl/standaard](https://fsc-standaard.nl/standaard))
 
 ## Sequentiediagrammen
 

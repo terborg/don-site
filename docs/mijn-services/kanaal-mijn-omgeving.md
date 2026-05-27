@@ -19,6 +19,9 @@ het [NL Design System](/communities/nl-design-system). Dit zorgt voor een
 consistente look & feel die aansluit bij de verwachtingen van gebruikers —
 ongeacht welke gemeente of overheidsorganisatie de MijnOmgeving aanbiedt.
 
+- Documentatie is te vinden op onder andere
+  [https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen](https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen)
+
 ## Identity provider
 
 Een inwoner of ondernemer moet zich kunnen authenticeren voordat hij zijn zaken
