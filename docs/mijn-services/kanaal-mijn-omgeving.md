@@ -19,8 +19,52 @@ het [NL Design System](/communities/nl-design-system). Dit zorgt voor een
 consistente look & feel die aansluit bij de verwachtingen van gebruikers —
 ongeacht welke gemeente of overheidsorganisatie de MijnOmgeving aanbiedt.
 
+We hanteren hierbij ook de principes van
+[Gebruiker Centraal](https://www.gebruikercentraal.nl/), zodat taal,
+interface-elementen en schermopbouw herkenbaar blijven voor gebruikers.
+
+- **Uniforme taal:** We gebruiken dezelfde termen voor dezelfde handelingen.
+- **Herkenbare UI-elementen:** Knoppen, formulieren en feedbackmeldingen werken
+  overal hetzelfde.
+- **Consistente schermopbouw:** Navigatie, pagina-indeling en terugkoppeling
+  sluiten aan op bekende patronen, ongeacht in welk portaal deze worden getoond.
+
 - Documentatie is te vinden op onder andere
   [https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen](https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen)
+
+### Scherminteractie en gebruikersonderzoek
+
+Binnen het kanaal **MijnOmgeving** toetsen we scherminteractie in de context
+waarin inwoners en ondernemers hun zaken, berichten en taken terugvinden.
+Gebruikersonderzoek helpt daarbij om te valideren of iemand direct begrijpt:
+
+1. waar diegene staat in het proces;
+2. welke actie nu nodig is;
+3. welke status of terugkoppeling de overheid geeft.
+
+Pas als dat in de MijnOmgeving helder werkt, vertalen we het interactiepatroon
+naar de technische specificaties van de onderliggende API's. Zo volgt de
+techniek de interactie, en niet andersom.
+
+### Visuele duidelijkheid
+
+Gebruikers scannen informatie. Visuele elementen moeten direct begrijpbaar zijn
+zonder uitleg.
+
+- Tekst boven abstractie: Een badge met de tekst "Nieuw" of "1 taak open" werkt
+  beter dan abstracte blauwe bolletjes of icoontjes.
+- Urgentie: Gebruik bij naderende deadlines een oranje waarschuwingsicoon direct
+  naast de datum om de urgentie aan te geven.
+- Key info eerst: Plaats belangrijke details zoals bedragen, datums of kentekens
+  direct bovenaan een bericht, zodat men niet hoeft te scrollen.
+
+Binnen de
+[MijnServices Community Sprint](https://nldesignsystem.nl/community/community-sprints/mijn-services-community/)
+van het NL Design System werken diverse overheidsorganisaties sinds september
+2024 samen aan de ontwikkeling van toegankelijke, huisstijl-onafhankelijke
+templates voor MijnOmgevingen en formulieren. Door gebruik te maken van gedeelde
+bouwblokken, gebruikersonderzoek en technische documentatie, wordt gewerkt aan
+een eenduidige en intuïtieve digitale ervaring voor inwoners en ondernemers.
 
 ## Identity provider
 
