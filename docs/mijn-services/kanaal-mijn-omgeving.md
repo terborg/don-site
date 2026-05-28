@@ -23,24 +23,20 @@ We hanteren hierbij ook de principes van
 [Gebruiker Centraal](https://www.gebruikercentraal.nl/), zodat taal,
 interface-elementen en schermopbouw herkenbaar blijven voor gebruikers.
 
-- **Uniforme taal:** We gebruiken dezelfde termen voor dezelfde handelingen.
-- **Herkenbare UI-elementen:** Knoppen, formulieren en feedbackmeldingen werken
-  overal hetzelfde.
-- **Consistente schermopbouw:** Navigatie, pagina-indeling en terugkoppeling
-  sluiten aan op bekende patronen, ongeacht in welk portaal deze worden getoond.
-
-- Documentatie is te vinden op onder andere
-  [https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen](https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen)
+Dat betekent concreet dat we dezelfde termen gebruiken voor dezelfde
+handelingen, dat knoppen, formulieren en feedbackmeldingen herkenbaar werken en
+dat navigatie, pagina-indeling en terugkoppeling aansluiten op bekende patronen,
+ongeacht in welk portaal ze worden getoond. Documentatie is te vinden via onder
+andere
+[de discussies over Mijn Omgevingen binnen NL Design System](https://github.com/orgs/nl-design-system/discussions/categories/mijn-omgevingen).
 
 ### Scherminteractie en gebruikersonderzoek
 
 Binnen het kanaal **MijnOmgeving** toetsen we scherminteractie in de context
 waarin inwoners en ondernemers hun zaken, berichten en taken terugvinden.
-Gebruikersonderzoek helpt daarbij om te valideren of iemand direct begrijpt:
-
-1. waar diegene staat in het proces;
-2. welke actie nu nodig is;
-3. welke status of terugkoppeling de overheid geeft.
+Gebruikersonderzoek helpt daarbij om te valideren of iemand direct begrijpt waar
+diegene staat in het proces, welke actie nu nodig is en welke status of
+terugkoppeling de overheid geeft.
 
 Pas als dat in de MijnOmgeving helder werkt, vertalen we het interactiepatroon
 naar de technische specificaties van de onderliggende API's. Zo volgt de
@@ -49,14 +45,11 @@ techniek de interactie, en niet andersom.
 ### Visuele duidelijkheid
 
 Gebruikers scannen informatie. Visuele elementen moeten direct begrijpbaar zijn
-zonder uitleg.
-
-- Tekst boven abstractie: Een badge met de tekst "Nieuw" of "1 taak open" werkt
-  beter dan abstracte blauwe bolletjes of icoontjes.
-- Urgentie: Gebruik bij naderende deadlines een oranje waarschuwingsicoon direct
-  naast de datum om de urgentie aan te geven.
-- Key info eerst: Plaats belangrijke details zoals bedragen, datums of kentekens
-  direct bovenaan een bericht, zodat men niet hoeft te scrollen.
+zonder uitleg. Een badge met de tekst "Nieuw" of "1 taak open" werkt daarbij
+beter dan abstracte blauwe bolletjes of icoontjes. Bij naderende deadlines helpt
+een oranje waarschuwingsicoon direct naast de datum om urgentie duidelijk te
+maken. Belangrijke details zoals bedragen, datums of kentekens staan bij
+voorkeur direct bovenaan een bericht, zodat men niet hoeft te scrollen.
 
 Binnen de
 [MijnServices Community Sprint](https://nldesignsystem.nl/community/community-sprints/mijn-services-community/)
