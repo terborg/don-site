@@ -27,14 +27,14 @@ graph RL
 ```
 
 De uitdaging is niet het kopiëren zelf, maar het verkrijgen van een consistente
-kopie van een continu veranderende bron. Er zijn twee voor de hand liggende
-benaderingen, elk met eigen beperkingen:
+kopie van een continu veranderende collectie bij de bron. Er zijn twee voor de
+hand liggende benaderingen, elk met eigen beperkingen:
 
 **Periodiek de gehele collectie opvragen** is eenvoudig, maar schaalt slecht.
 Het veroorzaakt veel netwerk- en serverbelasting, terwijl omvangrijke collecties
 vaak niet in één HTTP-respons via een regulier endpoint te leveren zijn.
 Paginering biedt hierbij geen betrouwbaar antwoord: doordat mutaties tijdens het
-uitlezen doorgaan, ontstaat 'page skew'. Daardoor worden items ongemerkt
+uitlezen doorgaan, ontstaat _page skew_. Daardoor worden items ongemerkt
 overgeslagen of juist dubbel verwerkt. Zie
 [Paginering van collecties](./paginering-van-collecties.md).
 
@@ -42,16 +42,16 @@ overgeslagen of juist dubbel verwerkt. Zie
 actueel te houden, maar zonder aanvullend mechanisme is het enige instappunt het
 historische begin. Een consumer die wil inspringen — of herstellen na
 dataverlies — zal (zonder aanvullend mechanisme) alle historische gebeurtenissen
-moeten replayen. Zo'n logboek is bovendien al snel vele malen groter dan de
-actuele collectie zelf. Dat leidt tot grote verwerkingstijden bij een 'cold
-boot' en schuurt met _privacy by design_, waaronder dataminimalisatie en het
+moeten nalopen. Zo'n logboek is bovendien al snel vele malen groter dan de
+actuele collectie zelf. Dat leidt tot grote verwerkingstijden bij een _cold
+boot_ en schuurt met _privacy by design_, waaronder dataminimalisatie en het
 [recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden)
 als de collectie persoonsgegevens bevat.
 
 Kortom: los van elkaar schieten beide methoden tekort. Alleen periodieke kopieën
 ophalen is te zwaar en te kwetsbaar; alleen wijzigingen verwerken kent zonder
 aanvullend mechanisme alleen het historische begin als instappunt. Door beide te
-combineren, ontstaat een patroon dat wel levert wat nodig is: consistent
+combineren, ontstaat een patroon dat wel levert wat nodig is: flexibel kunnen
 instappen, efficiënt bijblijven en fouttolerant herstellen.
 
 ## Het snapshots-en-delta's-patroon
