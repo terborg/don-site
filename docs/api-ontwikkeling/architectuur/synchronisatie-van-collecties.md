@@ -26,6 +26,14 @@ graph RL
         (HTTP)`"--> mirror
 ```
 
+Dit artikel richt zich op _state synchronization_: het in één richting
+synchroniseren van de actuele toestand van een collectie. _Snapshots_ bieden een
+instappunt; _delta's_ houden die toestand daarna efficiënt bij. Het patroon is
+niet bedoeld voor bidirectionele synchronisatie, conflictresolutie of volledige
+historische replay.
+
+### Oudere content
+
 Een bruikbaar synchronisatiepatroon moet aan twee eisen voldoen. Ten eerste moet
 een consumer op elk moment kunnen instappen of herstellen, zonder vanaf het
 historische begin te hoeven reconstrueren. Dat is nodig omdat consumers later
@@ -33,8 +41,6 @@ kunnen aansluiten of hun lokale status kunnen verliezen, terwijl providers vaak
 niet de volledige wijzigingsgeschiedenis bewaren. Ten tweede moet de
 synchronisatie sequentieel consistent zijn: wie vanaf een geldig instappunt
 correct volgt, moet in dezelfde toestand eindigen als iedere andere consumer.
-
-### Oudere content
 
 De uitdaging is niet het kopiëren zelf, maar het verkrijgen van de consistentie
 in de kopie die ook nog eens hooguit een seconde achterloopt. Er zijn twee voor
