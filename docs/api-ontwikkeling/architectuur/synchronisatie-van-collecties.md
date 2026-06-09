@@ -8,16 +8,16 @@ tags:
 
 # Synchronisatie van collecties
 
-In gedistribueerde systemen hebben consumers vaak een actuele, lokale kopie
-nodig van een collectie binnen een REST API (bijvoorbeeld `/documenten`).
-Daarmee kunnen zij data snel bevragen, lokaal verrijken of koppelen, en
-autonomer opereren.
+In gedistribueerde systemen hebben consumers vaak een actuele, lokale en vooral
+consistente kopie nodig van een _dynamische collectie_ binnen een REST API,
+bijvoorbeeld `/taken`. Daarmee kunnen zij data snel bevragen, lokaal verrijken
+of koppelen.
 
 ```mermaid
 graph RL
   subgraph Consumer
     mirror["`Collectie
-             (consistente view)`"]
+             (consistente kopie)`"]
   end
   subgraph Provider
     rc["`Collectie`"]
@@ -26,9 +26,9 @@ graph RL
         (HTTP)`"--> mirror
 ```
 
-De uitdaging is niet het kopiëren zelf, maar het verkrijgen van een consistente
-kopie van een continu veranderende collectie bij de bron. Er zijn twee voor de
-hand liggende benaderingen, elk met eigen beperkingen:
+De uitdaging is niet het kopiëren zelf, maar het verkrijgen van de consistentie
+in de kopie die hooguit een seconde achterloopt. Er zijn twee voor de hand
+liggende benaderingen, elk met eigen beperkingen:
 
 **Periodiek de gehele collectie opvragen** is eenvoudig, maar schaalt slecht.
 Het veroorzaakt veel netwerk- en serverbelasting, terwijl omvangrijke collecties
@@ -50,9 +50,9 @@ als de collectie persoonsgegevens bevat.
 
 Kortom: los van elkaar schieten beide methoden tekort. Alleen periodieke kopieën
 ophalen is te zwaar en te kwetsbaar; alleen wijzigingen verwerken kent zonder
-aanvullend mechanisme alleen het historische begin als instappunt. Door beide te
-combineren, ontstaat een patroon dat wel levert wat nodig is: flexibel kunnen
-instappen, efficiënt bijblijven en fouttolerant herstellen.
+aanvullend mechanisme alleen het historische begin als instappunt. Geen van
+beide voldoet daarmee goed aan de randvoorwaarden. Door beide te combineren,
+ontstaat een patroon dat dat wel doet.
 
 ## Het snapshots-en-delta's-patroon
 
@@ -69,10 +69,10 @@ werkt met twee parallelle stromen:
    Snapshots en delta's gebruiken eenzelfde cursor, zodat beide reeksen
    samengevoegd kunnen worden.
 
-De kern van het patroon is
-**[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency)**:
-elke consumer die bij een willekeurig snapshot begint en de delta-keten daarna
-volledig volgt, eindigt gegarandeerd in dezelfde toestand.
+De kern van het patroon is dat snapshots en delta's samen precies die twee
+randvoorwaarden ondersteunen: een consumer kan bij een willekeurig snapshot
+instappen, en wie daarna de delta-keten volledig volgt, eindigt gegarandeerd in
+dezelfde toestand.
 
 Samen vormen zij het synchronisatiemechanisme. Dit artikel werkt het patroon uit
 voor HTTP — het enige transportmiddel dat federatieve serviceconnectiviteit
