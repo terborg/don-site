@@ -26,9 +26,19 @@ graph RL
         (HTTP)`"--> mirror
 ```
 
+Een bruikbaar synchronisatiepatroon moet aan twee eisen voldoen. Ten eerste moet
+een consumer op elk moment kunnen instappen of herstellen, zonder vanaf het
+historische begin te hoeven reconstrueren. Dat is nodig omdat consumers later
+kunnen aansluiten of hun lokale status kunnen verliezen, terwijl providers vaak
+niet de volledige wijzigingsgeschiedenis bewaren. Ten tweede moet de
+synchronisatie sequentieel consistent zijn: wie vanaf een geldig instappunt
+correct volgt, moet in dezelfde toestand eindigen als iedere andere consumer.
+
+### Oudere content
+
 De uitdaging is niet het kopiëren zelf, maar het verkrijgen van de consistentie
-in de kopie die hooguit een seconde achterloopt. Er zijn twee voor de hand
-liggende benaderingen, elk met eigen beperkingen:
+in de kopie die ook nog eens hooguit een seconde achterloopt. Er zijn twee voor
+de hand liggende benaderingen, elk met eigen beperkingen:
 
 **Periodiek de gehele collectie opvragen** is eenvoudig, maar schaalt slecht.
 Het veroorzaakt veel netwerk- en serverbelasting, terwijl omvangrijke collecties
