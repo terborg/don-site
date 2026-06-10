@@ -20,55 +20,19 @@ graph RL
              (consistente kopie)`"]
   end
   subgraph Provider
-    rc["`Collectie`"]
+    rc["`Collectie
+         (bij de bron)`"]
   end
   rc --"`Synchronisatie
         (HTTP)`"--> mirror
 ```
 
-Dit artikel richt zich op _state synchronization_: het in één richting
-synchroniseren van de actuele toestand van een collectie. _Snapshots_ bieden een
-instappunt; _delta's_ houden die toestand daarna efficiënt bij. Het patroon is
-niet bedoeld voor bidirectionele synchronisatie, conflictresolutie of volledige
-historische replay.
-
-### Oudere content
-
-Een bruikbaar synchronisatiepatroon moet aan twee eisen voldoen. Ten eerste moet
-een consumer op elk moment kunnen instappen of herstellen, zonder vanaf het
-historische begin te hoeven reconstrueren. Dat is nodig omdat consumers later
-kunnen aansluiten of hun lokale status kunnen verliezen, terwijl providers vaak
-niet de volledige wijzigingsgeschiedenis bewaren. Ten tweede moet de
-synchronisatie sequentieel consistent zijn: wie vanaf een geldig instappunt
-correct volgt, moet in dezelfde toestand eindigen als iedere andere consumer.
-
-De uitdaging is niet het kopiëren zelf, maar het verkrijgen van de consistentie
-in de kopie die ook nog eens hooguit een seconde achterloopt. Er zijn twee voor
-de hand liggende benaderingen, elk met eigen beperkingen:
-
-**Periodiek de gehele collectie opvragen** is eenvoudig, maar schaalt slecht.
-Het veroorzaakt veel netwerk- en serverbelasting, terwijl omvangrijke collecties
-vaak niet in één HTTP-respons via een regulier endpoint te leveren zijn.
-Paginering biedt hierbij geen betrouwbaar antwoord: doordat mutaties tijdens het
-uitlezen doorgaan, ontstaat _page skew_. Daardoor worden items ongemerkt
-overgeslagen of juist dubbel verwerkt. Zie
-[Paginering van collecties](./paginering-van-collecties.md).
-
-**Een stroom van wijzigingen verwerken** is efficiënt om een lokale kopie
-actueel te houden, maar zonder aanvullend mechanisme is het enige instappunt het
-historische begin. Een consumer die wil inspringen — of herstellen na
-dataverlies — zal (zonder aanvullend mechanisme) alle historische gebeurtenissen
-moeten nalopen. Zo'n logboek is bovendien al snel vele malen groter dan de
-actuele collectie zelf. Dat leidt tot grote verwerkingstijden bij een _cold
-boot_ en schuurt met _privacy by design_, waaronder dataminimalisatie en het
-[recht om vergeten te worden](https://nl.wikipedia.org/wiki/Recht_om_vergeten_te_worden)
-als de collectie persoonsgegevens bevat.
-
-Kortom: los van elkaar schieten beide methoden tekort. Alleen periodieke kopieën
-ophalen is te zwaar en te kwetsbaar; alleen wijzigingen verwerken kent zonder
-aanvullend mechanisme alleen het historische begin als instappunt. Geen van
-beide voldoet daarmee goed aan de randvoorwaarden. Door beide te combineren,
-ontstaat een patroon dat dat wel doet.
+Het **snapshots-en-delta's-patroon** richt zich op _one-way state
+synchronization_: het in één richting synchroniseren van de actuele toestand van
+een collectie. _Snapshots_ bieden een instappunt; _delta's_ houden die toestand
+daarna efficiënt bij. Het patroon is niet bedoeld voor bidirectionele
+synchronisatie, conflictresolutie of volledige historische replay op basis van
+events.
 
 ## Het snapshots-en-delta's-patroon
 
@@ -85,10 +49,10 @@ werkt met twee parallelle stromen:
    Snapshots en delta's gebruiken eenzelfde cursor, zodat beide reeksen
    samengevoegd kunnen worden.
 
-De kern van het patroon is dat snapshots en delta's samen precies die twee
-randvoorwaarden ondersteunen: een consumer kan bij een willekeurig snapshot
-instappen, en wie daarna de delta-keten volledig volgt, eindigt gegarandeerd in
-dezelfde toestand.
+De kern van het patroon is dat snapshots en delta's samen een betrouwbaar
+instappunt en een consistente vervolgroute bieden: een consumer kan bij een
+willekeurig snapshot instappen, en wie daarna de delta-keten volledig volgt,
+eindigt gegarandeerd in dezelfde toestand.
 
 Samen vormen zij het synchronisatiemechanisme. Dit artikel werkt het patroon uit
 voor HTTP — het enige transportmiddel dat federatieve serviceconnectiviteit
