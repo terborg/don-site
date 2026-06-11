@@ -6,8 +6,7 @@ tags:
   - eda
 ---
 
-import CollectionSyncFlow from '@site/src/components/CollectionSyncFlow'; import
-SnapshotDeltaStreams from '@site/src/components/SnapshotDeltaStreams';
+import SnapshotDeltaStreams from '@site/src/components/SnapshotDeltaStreams';
 
 # Synchronisatie van collecties
 
@@ -105,7 +104,7 @@ collectie:
 ```text
 GET /resources/             → de collectie zelf (ongewijzigd, met ETag-header)
 GET /resources/snapshots/   → lijst van beschikbare snapshots
-GET /resources/snapshots/42 → inhoud van snapshot 42 (offset + limit)
+GET /resources/snapshots/42 → inhoud van snapshot 42 (statische collectie)
 GET /resources/deltas/      → stroom van delta's (polling of SSE);
                               geen individuele delta's
 ```
@@ -117,25 +116,31 @@ representatie van de actuele toestand teruggeeft, is het een _good practice_ om
 die toestand ook via een sterke HTTP `ETag`-header te ontsluiten:
 
 ```http
-GET /resources/
+HEAD /resources/
 → 200 OK
   ETag: "57"
+  Link: </resources/snapshots/>; rel="..."
+  Link: </resources/deltas/>; rel="..."
 ```
 
-Consumers weten hiermee direct wat de allernieuwste `state-id` van de collectie
-is, zonder dat ze per se de structuur voor grootschalige synchronisatie hoeven
-te bevragen. Dit verbindt het snapshots-en-delta's-patroon naadloos met
-standaard webfunctionaliteit en caching.
+Consumers weten hiermee direct wat de actuele `state-id` van de collectie is,
+zonder dat ze per se de structuur voor grootschalige synchronisatie hoeven te
+bevragen. Dit verbindt het snapshots-en-delta's-patroon naadloos met standaard
+webfunctionaliteit en caching.
 
-:::note Relatie tussen ETag en state-id Een `ETag` kan een bruikbare
-representatie zijn van een `state-id`. Een `ETag` hoort bij een specifieke
-HTTP-representatie; het `state-id` identificeert de logische toestand van de
-collectie. Geeft een collectie-endpoint één canonieke representatie van de
-actuele toestand terug, dan kan de provider het bijbehorende `state-id` als
-sterke `ETag` meesturen. Zodra dezelfde collectie via meerdere representaties of
-projecties beschikbaar is, is aanvullende afbakening nodig. Zie ook
+:::note
+
+Relatie tussen ETag en state-id Een `ETag` kan een bruikbare representatie zijn
+van een `state-id`. Een `ETag` hoort bij een specifieke HTTP-representatie; het
+`state-id` identificeert de logische toestand van de collectie. Geeft een
+collectie-endpoint één canonieke representatie van de actuele toestand terug,
+dan kan de provider het bijbehorende `state-id` als sterke `ETag` meesturen.
+Zodra dezelfde collectie via meerdere representaties of projecties beschikbaar
+is, is aanvullende afbakening nodig. Zie ook
 [Veilige gelijktijdigheid met optimistic locking](./gelijktijdigheid-met-optimistic-locking.md)
-voor het gebruik van `ETag` bij conditionele requests. :::
+voor het gebruik van `ETag` bij conditionele requests.
+
+:::
 
 ### Snapshot ophalen
 
@@ -161,6 +166,13 @@ de consumer alvast luisteren en ontvangen delta's tijdelijk bufferen. Dat is
 nuttig wanneer delta's vooruitlopen op een groot snapshot dat nog wordt gemaakt
 of nog wordt gedownload. Tegelijk blijft de consumer periodiek de snapshot-lijst
 opvragen.
+
+De inhoud van een snapshot is een statische collectie: nadat het snapshot is
+gemaakt, verandert de inhoud ervan niet meer. Daardoor kan de provider de inhoud
+op verschillende manieren aanbieden, bijvoorbeeld met offset/limit-paginering,
+cursorpaginering, vaste chunks of bestanden. Welke vorm de provider kiest, is
+een transportkeuze; voor het patroon is vooral belangrijk dat alle delen samen
+dezelfde snapshot-toestand representeren.
 
 Vervolgens haalt de consumer de inhoud op via het id. De respons levert ook de
 bijbehorende `ETag`:
