@@ -1,5 +1,7 @@
 .figure {
   --stream-border: var(--don-grijs-300);
+  --stream-active-border: var(--don-donkerblauw-300);
+  --stream-active-surface: var(--don-lichtblauw-50);
   --stream-line: var(--don-donkerblauw-300);
   --stream-muted: var(--don-grijs-600);
   --stream-label-gap: 0.5rem;
@@ -44,10 +46,14 @@
 }
 
 .laneLabel {
+  align-self: start;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  margin-top: 2.125rem;
   color: var(--don-grijs-700);
   font-weight: 700;
+  line-height: 1.5;
+  transform: translateY(-50%);
 }
 
 .lanes {
@@ -134,9 +140,9 @@
 }
 
 .snapshotEntry {
-  border-color: var(--don-groen-200);
-  background: var(--don-groen-50);
-  box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px var(--don-groen-200);
+  border-color: var(--stream-active-border);
+  background: var(--stream-active-surface);
+  box-shadow: 0 0 0 3px #ffffff, 0 0 0 5px var(--stream-active-border);
 }
 
 .deltaLane {
@@ -233,8 +239,8 @@
 }
 
 .next {
-  border-color: var(--don-donkerblauw-300);
-  background: var(--don-lichtblauw-50);
+  border-color: var(--stream-active-border);
+  background: var(--stream-active-surface);
 }
 
 .entryLine {
@@ -282,82 +288,4 @@
   color: var(--stream-muted);
   font-size: 0.875rem;
   line-height: 1.4;
-}
-
-@media (max-width: 48rem) {
-  .figure {
-    padding: 0.75rem;
-  }
-
-  .streamGrid,
-  .notes {
-    grid-template-columns: 1fr;
-  }
-
-  .labelStack {
-    display: none;
-  }
-
-  .mobileLaneLabel {
-    display: block;
-    color: var(--don-grijs-700);
-    font-weight: 700;
-  }
-
-  .snapshotLane,
-  .deltaLane {
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-  }
-
-  .deltaLane {
-    grid-template-rows: none;
-  }
-
-  .snapshot {
-    min-height: auto;
-  }
-
-  .deltaTrack {
-    top: 0;
-    bottom: 0;
-    left: 2.875rem;
-    width: 2px;
-    height: auto;
-  }
-
-  .delta {
-    grid-column: 1;
-    justify-self: start;
-  }
-
-  .deltaAnnotation {
-    grid-column: 1;
-    justify-self: start;
-    padding-left: 5rem;
-    text-align: left;
-  }
-
-  .entryLine {
-    position: relative;
-    top: auto;
-    bottom: auto;
-    left: auto;
-    height: auto;
-    align-items: flex-start;
-    width: auto;
-    margin: 0.25rem 0;
-    padding: 0.5rem 0 0.5rem 0.75rem;
-    background: transparent;
-    border-top: 3px solid var(--don-robijnrood-500);
-    transform: none;
-  }
-
-  .notes {
-    margin-left: 0;
-  }
-
-  .before {
-    margin-right: 0;
-  }
 }

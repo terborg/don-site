@@ -43,7 +43,12 @@ Het **snapshots-en-delta's** (of _snapshots en incrementele updates_) patroon
 maakt de synchronisatie betrouwbaar door twee parallelle stromen te combineren:
 een laagfrequente stroom van volledige momentopnames en een hoogfrequente stroom
 van wijzigingen. De ene stroom biedt een veilig instappunt, de andere stroom
-vormt de vervolgroute vanaf dat punt.
+zorgt ervoor dat de lokale kopie actueel blijft.
+
+Snapshots en delta's krijgen daarom een positie in dezelfde reeks. In dit
+artikel noemen we die positie een **state-id**. Een snapshot bevat de toestand
+tot en met zijn state-id; een delta beschrijft de stap van de vorige state-id
+naar een volgende state-id.
 
 <SnapshotDeltaStreams />
 
@@ -70,35 +75,19 @@ Delta's zijn de normale route om actueel te blijven. Ze zijn niet alleen een
 notificatie dat er iets is veranderd, maar bevatten de informatie waarmee de
 lokale kopie kan worden bijgewerkt.
 
-### De garantie
+### De garantie: sequentiële consistentie
 
-De claim van het patroon is beperkt maar sterk: wie een consistent snapshot
-laadt en daarna de aansluitende delta-keten volledig verwerkt, eindigt in
-dezelfde toestand als de broncollectie.
-
-Daarvoor moeten snapshots en delta's elkaar overlappen. Een consumer kan delta's
-al ontvangen terwijl een snapshot nog wordt gemaakt of gedownload. Die delta's
-worden dan tijdelijk gebufferd, maar nog niet toegepast. Zodra het snapshot is
-geladen, verwijdert de consumer alles wat al in het snapshot zit en verwerkt hij
-alleen de delta's die op de snapshotpositie aansluiten.
+De claim van het patroon is beperkt maar sterk: wie een snapshot laadt en daarna
+de aansluitende delta-keten volledig verwerkt, eindigt in dezelfde toestand als
+de broncollectie. Dit is een vorm van
+[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
+de lokale kopie loopt hooguit achter, maar is verder gegarandeerd identiek.
 
 Ontbreekt die aansluiting, of is de positie niet meer beschikbaar, dan is de
 lokale kopie niet betrouwbaar verder te brengen. De consumer kiest dan opnieuw
 een snapshot als instappunt.
 
-<CollectionSyncFlow />
-
-### Rollen in het patroon
-
-De provider zorgt voor volledige snapshots, aaneengesloten delta's en voldoende
-overlap in retentie. Bij elke wijziging of groep wijzigingen legt de provider
-een delta atomair vast, zodat de keten geen hiaat krijgt.
-
-De consumer houdt een lokale kopie en een positie in de reeks bij. Zonder
-snapshot is er nog geen betrouwbare basistoestand. Na een snapshot verwerkt de
-consumer alleen delta's die aantoonbaar aansluiten op de laatst bekende positie.
-
-## REST API
+## Uitwerking voor REST API's
 
 In deze invulling identificeert een **state-id** de exacte toestand van de
 collectie op een bepaald moment — bijvoorbeeld een oplopend transactienummer,
@@ -463,6 +452,13 @@ tijd. Als een consumer pas daarna overschakelt op delta's, mogen de delta's die
 in de tussentijd zijn ontstaan niet al zijn opgeruimd. De retentie van delta's
 moet daarom ruimschoots langer zijn dan de langst plausibele download- en
 verwerkingstijd van een snapshot.
+
+De ontvangst van delta's kan vooruitlopen op het laden van een snapshot: een
+consumer kan al beginnen met het ontvangen van delta's terwijl er mogelijk nog
+geen snapshot is, of terwijl het snapshot nog wordt gedownload. Die delta's
+worden dan tijdelijk gebufferd, maar nog niet toegepast. Zodra het snapshot is
+geladen, verwijdert de consumer alles wat al in het snapshot zit en verwerkt hij
+alleen de delta's die op de snapshotpositie aansluiten.
 
 ### Retentie van snapshots en delta's
 
