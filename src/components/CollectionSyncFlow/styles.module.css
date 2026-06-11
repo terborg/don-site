@@ -1,0 +1,220 @@
+.figure {
+  --flow-border: var(--don-grijs-300);
+  --flow-line: var(--don-donkerblauw-300);
+  --flow-muted: var(--don-grijs-600);
+  --flow-surface: var(--don-grijs-50);
+  margin: 2rem 0;
+  padding: 1rem;
+  border: 1px solid var(--flow-border);
+  border-radius: 0.5rem;
+  background: linear-gradient(var(--flow-surface), #ffffff);
+}
+
+.caption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  color: var(--don-grijs-900);
+}
+
+.eyebrow {
+  color: var(--don-robijnrood-500);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1.75rem;
+  align-items: stretch;
+}
+
+.stepWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.stepWrap:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -1.55rem;
+  width: 1.35rem;
+  height: 2px;
+  background: var(--flow-line);
+}
+
+.stepWrap:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: calc(50% - 0.25rem);
+  right: -1.6rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-top: 2px solid var(--flow-line);
+  border-right: 2px solid var(--flow-line);
+  transform: rotate(45deg);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.25rem 0.5rem;
+  height: 100%;
+  min-height: 8.5rem;
+  padding: 0.875rem;
+  border: 2px solid var(--don-donkerblauw-300);
+  border-radius: 0.375rem;
+  background: #ffffff;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+}
+
+.source {
+  border-color: var(--don-groen-200);
+  background: var(--don-groen-50);
+}
+
+.consumer {
+  border-color: var(--don-lichtblauw-400);
+  background: var(--don-lichtblauw-50);
+}
+
+.state {
+  border-color: var(--don-robijnrood-200);
+  background: var(--don-robijnrood-50);
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--don-donkerblauw-500);
+  color: #ffffff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.stepTitle {
+  align-self: center;
+  color: var(--don-grijs-900);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.stepDetail {
+  grid-column: 1 / -1;
+  color: var(--flow-muted);
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+
+.cursorRail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+  color: var(--don-donkerblauw-500);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.cursorRail::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--don-donkerblauw-200) 0,
+    var(--don-donkerblauw-200) 0.5rem,
+    transparent 0.5rem,
+    transparent 0.875rem
+  );
+}
+
+.cursorRail span {
+  position: relative;
+  padding: 0.125rem 0.5rem;
+  background: var(--flow-surface);
+}
+
+.exceptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.exception {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.8fr) auto minmax(8rem, 1fr);
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.75rem;
+  border-left: 4px solid var(--don-robijnrood-200);
+  background: #ffffff;
+}
+
+.exceptionTrigger {
+  color: var(--don-robijnrood-500);
+  font-weight: 700;
+}
+
+.exceptionArrow {
+  color: var(--flow-line);
+  font-family: var(--ifm-font-family-monospace);
+  font-weight: 700;
+}
+
+.exceptionAction {
+  color: var(--don-grijs-900);
+  font-weight: 700;
+}
+
+.exceptionOutcome {
+  grid-column: 3;
+  color: var(--flow-muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 72rem) {
+  .flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stepWrap:not(:last-child)::after,
+  .stepWrap:not(:last-child)::before {
+    content: none;
+  }
+}
+
+@media (max-width: 48rem) {
+  .figure {
+    padding: 0.75rem;
+  }
+
+  .flow,
+  .exceptions {
+    grid-template-columns: 1fr;
+  }
+
+  .step {
+    min-height: auto;
+  }
+
+  .exception,
+  .exceptionOutcome {
+    grid-template-columns: 1fr;
+    grid-column: auto;
+  }
+
+  .exceptionArrow {
+    display: none;
+  }
+}
