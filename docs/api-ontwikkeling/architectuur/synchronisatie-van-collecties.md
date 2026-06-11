@@ -36,6 +36,11 @@ daarna efficiënt bij. Het patroon is niet bedoeld voor bidirectionele
 synchronisatie, conflictresolutie of volledige historische replay op basis van
 events.
 
+De garantie van het patroon is
+[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
+een vorm van sterke consistentie waarbij de lokale kopie — met een
+tijdsvertraging — gegarandeerd identiek is aan de collectie bij de bron.
+
 ## Het snapshots-en-delta's-patroon
 
 Het **snapshots-en-delta's** (of _snapshots en incrementele updates_) patroon
@@ -76,18 +81,6 @@ Delta's vormen de reguliere route om de lokale kopie continu actueel te houden
 zonder telkens de volledige dataset opnieuw op te hoeven vragen. Ze bevatten
 niet alleen de notificatie dát er iets is veranderd, maar dragen ook direct de
 inhoud van de wijziging (de mutatie) met zich mee.
-
-### De garantie: sequentiële consistentie
-
-De claim van het patroon is beperkt maar sterk: wie een snapshot laadt en daarna
-de aansluitende delta-keten volledig verwerkt, eindigt in dezelfde toestand als
-de broncollectie. Dit is een vorm van
-[sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
-de lokale kopie loopt hooguit achter, maar is verder gegarandeerd identiek.
-
-Ontbreekt die aansluiting, of is de positie niet meer beschikbaar, dan is de
-lokale kopie niet betrouwbaar verder te brengen. De consumer kiest dan opnieuw
-een snapshot als instappunt.
 
 ## Uitwerking voor REST API's
 
