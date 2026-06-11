@@ -6,7 +6,8 @@ tags:
   - eda
 ---
 
-import CollectionSyncFlow from '@site/src/components/CollectionSyncFlow';
+import CollectionSyncFlow from '@site/src/components/CollectionSyncFlow'; import
+SnapshotDeltaStreams from '@site/src/components/SnapshotDeltaStreams';
 
 # Synchronisatie van collecties
 
@@ -39,102 +40,63 @@ events.
 ## Het snapshots-en-delta's-patroon
 
 Het **snapshots-en-delta's** (of _snapshots en incrementele updates_) patroon
-werkt met twee parallelle stromen:
+maakt de synchronisatie betrouwbaar door twee parallelle stromen te combineren:
+een laagfrequente stroom van volledige momentopnames en een hoogfrequente stroom
+van wijzigingen. De ene stroom biedt een veilig instappunt, de andere stroom
+vormt de vervolgroute vanaf dat punt.
 
-1. **Snapshots (laagfrequent):** Een stroom van volledige momentopnames van de
-   collectie. Deze grote, consistente weergaves op één specifiek moment zijn
-   ideaal voor nieuwe consumers (bootstrapping) of na verlies van lokale status
-   bij de consumer (herstel).
-2. **Delta's (hoogfrequent):** Een continue stroom van incrementele wijzigingen.
-   Deze kleine updates bevatten de individuele mutaties (aanmaken, wijzigen,
-   verwijderen) die de collectie van de ene naar de andere toestand brengen.
-   Snapshots en delta's gebruiken eenzelfde cursor, zodat beide reeksen
-   samengevoegd kunnen worden.
+<SnapshotDeltaStreams />
 
-De kern van het patroon is dat snapshots en delta's samen een betrouwbaar
-instappunt en een consistente vervolgroute bieden: een consumer kan bij een
-willekeurig snapshot instappen, en wie daarna de delta-keten volledig volgt,
-eindigt gegarandeerd in dezelfde toestand.
+### Snapshots: instappunten
 
-Samen vormen zij het synchronisatiemechanisme.
+Een snapshot is een volledige, consistente weergave van de collectie op één
+specifiek moment. Daarmee kan een consumer beginnen zonder de volledige
+wijzigingsgeschiedenis te kennen. Dat is nodig bij de eerste start, maar ook bij
+herstel na verlies van lokale status, verlopen retentie of een breuk in de
+delta-keten.
 
-### Consumer
+Een snapshot is pas bruikbaar als duidelijk is bij welke positie in de reeks het
+hoort. Die positie vormt de verticale lijn in het patroon: alles tot en met dat
+punt zit al in het snapshot, alles daarna moet via delta's worden verwerkt.
 
-#### Intern datamodel
+### Delta's: vervolgroute
 
-Een consumer houdt minimaal twee dingen bij:
+Delta's beschrijven de wijzigingen na een bekende positie. Elke delta brengt de
+collectie van de ene toestand naar de volgende toestand. De delta-keten moet
+daarom aaneengesloten zijn: een consumer kan alleen veilig doorschuiven als de
+volgende delta aansluit op de positie die hij al heeft verwerkt.
 
-- **Cursor** — de positie in de gecombineerde reeks van snapshots en delta's. Is
-  er nog geen snapshot geladen, dan is de cursor afwezig.
-- **Mirror** — de lokale kopie van de resourcecollectie, opgebouwd uit het
-  snapshot en de daarna toegepaste delta's.
+Delta's zijn de normale route om actueel te blijven. Ze zijn niet alleen een
+notificatie dat er iets is veranderd, maar bevatten de informatie waarmee de
+lokale kopie kan worden bijgewerkt.
 
-#### Toestandsmachine
+### De garantie
 
-Door het verwerken van de reguliere delta's als de hoofdcyclus te zien (en niet
-als een uitzondering), ontstaat een eenvoudige toestandsmachine. De consumer
-bevindt zich in de basis in de toestand **Volgen**:
+De claim van het patroon is beperkt maar sterk: wie een consistent snapshot
+laadt en daarna de aansluitende delta-keten volledig verwerkt, eindigt in
+dezelfde toestand als de broncollectie.
 
-```mermaid
-stateDiagram-v2
-    [*] --> Herstellen: Geen cursor aanwezig
+Daarvoor moeten snapshots en delta's elkaar overlappen. Een consumer kan delta's
+al ontvangen terwijl een snapshot nog wordt gemaakt of gedownload. Die delta's
+worden dan tijdelijk gebufferd, maar nog niet toegepast. Zodra het snapshot is
+geladen, verwijdert de consumer alles wat al in het snapshot zit en verwerkt hij
+alleen de delta's die op de snapshotpositie aansluiten.
 
-    Herstellen --> Volgen: Snapshot geladen
-    Herstellen --> Luisteren: Nog geen snapshot beschikbaar
-    Luisteren --> Luisteren: Delta ontvangen en gebufferd
-    Luisteren --> Herstellen: Snapshot beschikbaar, buffer filteren
-
-    Volgen --> Volgen: Delta toegepast
-    Volgen --> Wachten: Actueel (geen nieuwe delta)
-    Wachten --> Volgen: Nieuwe delta
-
-    Volgen --> Herstellen: Cursor verlopen of hiaat
-```
-
-- **Herstellen (Snapshot laden)**: de cursor ontbreekt (eerste start) of is
-  verlopen — de provider herkent de cursor niet meer, of er is een hiaat in de
-  keten. De consumer probeert een bruikbaar snapshot te laden en stelt de cursor
-  in op de positie daarvan.
-- **Luisteren zonder cursor**: als er nog geen snapshot beschikbaar is, kan de
-  consumer de delta-stroom al volgen. Ontvangen delta's worden tijdelijk
-  gebufferd, maar nog niet toegepast: zonder snapshot ontbreekt de consistente
-  basistoestand waarop `prev_id` moet aansluiten. Zodra het snapshot is geladen,
-  gooit de consumer gebufferde delta's tot en met het state-id van het snapshot
-  weg en verwerkt hij alleen de daarop aansluitende delta-keten.
-- **Volgen ↔ Wachten**: de consumer past delta's toe en schuift de cursor steeds
-  op. Zijn er geen nieuwe delta's, dan wacht de consumer tot er een binnenkomt.
-- **Volgen → Herstellen**: de provider signaleert dat de cursor niet meer geldig
-  is. De consumer herstart vanuit een nieuw snapshot.
+Ontbreekt die aansluiting, of is de positie niet meer beschikbaar, dan is de
+lokale kopie niet betrouwbaar verder te brengen. De consumer kiest dan opnieuw
+een snapshot als instappunt.
 
 <CollectionSyncFlow />
 
-### Provider
+### Rollen in het patroon
 
-De provider kent een vergelijkbare cyclus:
+De provider zorgt voor volledige snapshots, aaneengesloten delta's en voldoende
+overlap in retentie. Bij elke wijziging of groep wijzigingen legt de provider
+een delta atomair vast, zodat de keten geen hiaat krijgt.
 
-```mermaid
-flowchart TD
-    Start((●)) --> W{Wachten}
-
-    W -->|Wijziging doorgevoerd| D[Delta publiceren]
-    D --> W
-
-    W -->|Snapshot-trigger| S[Snapshot aanmaken]
-    S --> W
-
-    W -->|Retentie verlopen| R[Verouderde data opruimen]
-    R --> W
-```
-
-- **Delta publiceren**: bij elke wijziging of groep wijzigingen legt de provider
-  een delta atomair vast. De delta-keten blijft zo aaneengesloten.
-- **Snapshot aanmaken**: na een datamigratie, schemawijziging, complete reset of
-  toepassing van het recht op verwijdering maakt de provider een nieuw snapshot
-  aan. Consumers merken dit vanzelf: hun cursor sluit niet meer aan op de keten
-  en ze starten opnieuw vanuit het nieuwe snapshot.
-- **Verouderde data opruimen**: na het verstrijken van de retentieperiode
-  verwijdert de provider snapshots en delta's. Consumers met een verlopen cursor
-  worden vanzelf naar een nieuw snapshot gestuurd.
+De consumer houdt een lokale kopie en een positie in de reeks bij. Zonder
+snapshot is er nog geen betrouwbare basistoestand. Na een snapshot verwerkt de
+consumer alleen delta's die aantoonbaar aansluiten op de laatst bekende positie.
 
 ## REST API
 
