@@ -30,16 +30,25 @@ export default function SnapshotDeltaStreams(): React.ReactNode {
           <div className={styles.lanes}>
             <div className={styles.mobileLaneLabel}>Snapshots</div>
             <div className={`${styles.lane} ${styles.snapshotLane}`}>
-              <div className={`${styles.snapshot} ${styles.snapshotPrevious}`}>
-                <span>snapshot 10</span>
+              <div className={styles.snapshotGroup}>
+                <div className={`${styles.snapshot} ${styles.snapshotPrevious}`}>
+                  <span>snapshot</span>
+                  <strong>10</strong>
+                </div>
                 <small>eerder herstelpunt</small>
               </div>
-              <div className={`${styles.snapshot} ${styles.snapshotEntry}`}>
-                <span>snapshot 42</span>
+              <div className={styles.snapshotGroup}>
+                <div className={`${styles.snapshot} ${styles.snapshotEntry}`}>
+                  <span>snapshot</span>
+                  <strong>42</strong>
+                </div>
                 <small>actueel herstelpunt</small>
               </div>
-              <div className={`${styles.snapshot} ${styles.snapshotFuture}`}>
-                <span>snapshot 84</span>
+              <div className={styles.snapshotGroup}>
+                <div className={`${styles.snapshot} ${styles.snapshotFuture}`}>
+                  <span>snapshot</span>
+                  <strong>84</strong>
+                </div>
                 <small>volgend herstelpunt</small>
               </div>
             </div>
@@ -58,6 +67,12 @@ export default function SnapshotDeltaStreams(): React.ReactNode {
                   <strong>{delta.id}</strong>
                 </div>
               ))}
+              <div className={`${styles.deltaAnnotation} ${styles.pastAnnotation}`}>
+                al in snapshot
+              </div>
+              <div className={`${styles.deltaAnnotation} ${styles.nextAnnotation}`}>
+                delta's toepassen
+              </div>
             </div>
           </div>
         </div>
