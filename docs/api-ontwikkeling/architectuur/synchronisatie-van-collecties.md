@@ -6,6 +6,8 @@ tags:
   - eda
 ---
 
+import CollectionSyncFlow from '@site/src/components/CollectionSyncFlow';
+
 # Synchronisatie van collecties
 
 In gedistribueerde systemen hebben consumers vaak een actuele, lokale en vooral
@@ -54,18 +56,7 @@ instappunt en een consistente vervolgroute bieden: een consumer kan bij een
 willekeurig snapshot instappen, en wie daarna de delta-keten volledig volgt,
 eindigt gegarandeerd in dezelfde toestand.
 
-Samen vormen zij het synchronisatiemechanisme. Dit artikel werkt het patroon uit
-voor HTTP — het enige transportmiddel dat federatieve serviceconnectiviteit
-ondersteunt en op de
-["pas toe, leg uit"-lijst van open standaarden](https://www.forumstandaardisatie.nl/open-standaarden/verplicht)
-staat. Concreet: via polling of Server-Sent Events (SSE). Het patroon is
-bovendien een extensie van een bestaande HTTP API, zonder extra modules of
-diensten.
-
-Wanneer interoperabiliteit een gestandaardiseerde event-envelop vereist, sluit
-de structuur van delta's aan op het
-[NLGov-profiel voor CloudEvents](https://gitdocumentatie.logius.nl/publicatie/notificatieservices/cloudevents-nl/1.1/)
-(pas toe, leg uit). Het patroon werkt ook zonder deze extra afhankelijkheid.
+Samen vormen zij het synchronisatiemechanisme.
 
 ### Consumer
 
@@ -89,6 +80,9 @@ stateDiagram-v2
     [*] --> Herstellen: Geen cursor aanwezig
 
     Herstellen --> Volgen: Snapshot geladen
+    Herstellen --> Luisteren: Nog geen snapshot beschikbaar
+    Luisteren --> Luisteren: Delta ontvangen en gebufferd
+    Luisteren --> Herstellen: Snapshot beschikbaar, buffer filteren
 
     Volgen --> Volgen: Delta toegepast
     Volgen --> Wachten: Actueel (geen nieuwe delta)
@@ -99,12 +93,20 @@ stateDiagram-v2
 
 - **Herstellen (Snapshot laden)**: de cursor ontbreekt (eerste start) of is
   verlopen — de provider herkent de cursor niet meer, of er is een hiaat in de
-  keten. De consumer laadt een nieuw snapshot en stelt de cursor in op de
-  positie daarvan.
+  keten. De consumer probeert een bruikbaar snapshot te laden en stelt de cursor
+  in op de positie daarvan.
+- **Luisteren zonder cursor**: als er nog geen snapshot beschikbaar is, kan de
+  consumer de delta-stroom al volgen. Ontvangen delta's worden tijdelijk
+  gebufferd, maar nog niet toegepast: zonder snapshot ontbreekt de consistente
+  basistoestand waarop `prev_id` moet aansluiten. Zodra het snapshot is geladen,
+  gooit de consumer gebufferde delta's tot en met het state-id van het snapshot
+  weg en verwerkt hij alleen de daarop aansluitende delta-keten.
 - **Volgen ↔ Wachten**: de consumer past delta's toe en schuift de cursor steeds
   op. Zijn er geen nieuwe delta's, dan wacht de consumer tot er een binnenkomt.
 - **Volgen → Herstellen**: de provider signaleert dat de cursor niet meer geldig
   is. De consumer herstart vanuit een nieuw snapshot.
+
+<CollectionSyncFlow />
 
 ### Provider
 
@@ -199,6 +201,16 @@ GET /resources/snapshots
   }
 ```
 
+Er kan tijdelijk nog geen snapshot beschikbaar zijn, bijvoorbeeld wanneer een
+collectie nieuw is aangesloten of het eerste snapshot nog wordt opgebouwd. De
+consumer heeft dan nog geen cursor en mag ontvangen delta's niet toepassen,
+omdat er geen bekende basistoestand is waarop de delta-keten aansluit. Bij
+transporten die een live stroom bieden, zoals SSE, webhooks of een broker, kan
+de consumer alvast luisteren en ontvangen delta's tijdelijk bufferen. Dat is
+nuttig wanneer delta's vooruitlopen op een groot snapshot dat nog wordt gemaakt
+of nog wordt gedownload. Tegelijk blijft de consumer periodiek de snapshot-lijst
+opvragen.
+
 Vervolgens haalt de consumer de inhoud op via het id. De respons levert ook de
 bijbehorende `ETag`:
 
@@ -220,11 +232,15 @@ Omdat snapshots statisch zijn, treedt er geen page skew op. De consumer laadt
 het nieuwe snapshot bij voorkeur in een aparte staging-area en schakelt pas over
 naar de nieuwe toestand — en verwijdert de vorige — als alle chunks succesvol
 zijn binnengekomen. Na de laatste chunk stelt de consumer het state-id in op
-`42`. De provider houdt snapshots beschikbaar gedurende een vaste
-retentieperiode zodat consumers de tijd hebben om ze volledig te downloaden.
-Verloopt een snapshot voordat de download is voltooid — kenbaar via `410 Gone`
-op een latere chunk — dan herhaalt de consumer het proces met het meest recente
-beschikbare snapshot.
+`42`. Heeft de consumer tijdens het laden delta's gebufferd, dan verwijdert hij
+eerst alle delta's met een `id` tot en met `42`. Daarna verwerkt hij alleen de
+eerste gebufferde delta waarvan `prev_id` gelijk is aan `42`, en vervolgens de
+aansluitende keten. Ontbreekt die aansluiting, dan is de buffer onvoldoende en
+moet de consumer opnieuw herstellen vanaf een beschikbaar snapshot. De provider
+houdt snapshots beschikbaar gedurende een vaste retentieperiode zodat consumers
+de tijd hebben om ze volledig te downloaden. Verloopt een snapshot voordat de
+download is voltooid — kenbaar via `410 Gone` op een latere chunk — dan herhaalt
+de consumer het proces met het meest recente beschikbare snapshot.
 
 Snapshot-chunks zijn statische bestanden en kunnen potentieel groot zijn. Ze
 lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
