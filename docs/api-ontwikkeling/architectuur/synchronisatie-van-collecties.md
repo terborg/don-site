@@ -63,16 +63,19 @@ Een snapshot is pas bruikbaar als duidelijk is bij welke positie in de reeks het
 hoort. Die positie vormt de verticale lijn in het patroon: alles tot en met dat
 punt zit al in het snapshot, alles daarna moet via delta's worden verwerkt.
 
-### Delta's: vervolgroute
+### Delta's: actueel blijven via updates
 
-Delta's beschrijven de wijzigingen na een bekende positie. Elke delta brengt de
-collectie van de ene toestand naar de volgende toestand. De delta-keten moet
-daarom aaneengesloten zijn: een consumer kan alleen veilig doorschuiven als de
-volgende delta aansluit op de positie die hij al heeft verwerkt.
+Delta's beschrijven de stapsgewijze wijzigingen vanaf een bekende positie. Elk
+delta-event brengt de collectie van de ene toestand naar de direct
+daaropvolgende toestand. Om de lokale kopie consistent te houden, moet de
+delta-keten aaneengesloten zijn: een consumer kan zijn toestand alleen veilig
+doorschuiven als een nieuwe delta exact aansluit op de toestand of positie van
+de laatst succesvol verwerkte delta.
 
-Delta's zijn de normale route om actueel te blijven. Ze zijn niet alleen een
-notificatie dat er iets is veranderd, maar bevatten de informatie waarmee de
-lokale kopie kan worden bijgewerkt.
+Delta's vormen de reguliere route om de lokale kopie continu actueel te houden
+zonder telkens de volledige dataset opnieuw op te hoeven vragen. Ze bevatten
+niet alleen de notificatie dát er iets is veranderd, maar dragen ook direct de
+inhoud van de wijziging (de mutatie) met zich mee.
 
 ### De garantie: sequentiële consistentie
 
@@ -301,6 +304,23 @@ verwerkte delta. Ontvangt de consumer onverhoopt een delta waarvan het `id` al
 gelijk is aan of ouder is dan het huidige state-id (bijvoorbeeld bij
 netwerk-retries), dan negeert de consumer deze (idempotentie). Een lege
 items-lijst betekent dat de consumer actueel is.
+
+Om te voorkomen dat de respons op `GET /resources/deltas` een gigantisch object
+wordt (bijvoorbeeld als de consumer lang offline is geweest en er inmiddels
+duizenden mutaties zijn), past de provider twee mechanismen toe:
+
+1. **Geforceerde paginering via `limit`:** De provider levert nooit alle
+   openstaande delta's in één keer, maar dwingt een maximum af (bijvoorbeeld
+   `limit=100`). De consumer verwerkt deze pagina, werkt zijn lokale status bij
+   naar de `id` van de laatste verwerkte delta, en vraagt de volgende pagina op
+   (`?after=<nieuwe_id>&limit=100`). Dit herhaalt zich totdat een lege lijst
+   wordt teruggegeven.
+2. **De `410 Gone`-vangrail:** Als de consumer zó ver achterloopt dat de delta's
+   niet meer in de retentieperiode van de provider vallen (of wanneer het
+   opvragen van de achterstand te zwaar is), weigert de provider de delta's te
+   leveren en antwoordt met `410 Gone`. Dit dwingt de consumer om een nieuw,
+   statisch en eventueel via CDN gecached snapshot te downloaden. Dat is veel
+   efficiënter voor grootschalig herstel.
 
 Als het state-id niet meer bekend is bij de provider, antwoordt de provider met
 `410 Gone`:
