@@ -88,10 +88,9 @@ een snapshot als instappunt.
 
 ## Uitwerking voor REST API's
 
-In deze invulling identificeert een **state-id** de exacte toestand van de
-collectie op een bepaald moment — bijvoorbeeld een oplopend transactienummer,
-tijdstempel, UUID of hash. De provider bepaalt de exacte vorm; elk state-id moet
-uniek zijn binnen de collectie.
+In deze invulling kiest de provider de concrete vorm van het state-id,
+bijvoorbeeld een oplopend transactienummer, tijdstempel, UUID of hash. Elk
+state-id moet uniek zijn binnen de collectie.
 
 De onderstaande invulling is een aanbeveling. Het patroon zelf — snapshot,
 delta, state-id — is leidend; de URL-structuur en veldnamen zijn niet verplicht.
@@ -105,8 +104,8 @@ collectie:
 GET /resources/             → de collectie zelf (ongewijzigd, met ETag-header)
 GET /resources/snapshots/   → lijst van beschikbare snapshots
 GET /resources/snapshots/42 → inhoud van snapshot 42 (statische collectie)
-GET /resources/deltas/      → stroom van delta's (polling of SSE);
-                              geen individuele delta's
+GET /resources/deltas       → lijst of stroom van delta's (polling of SSE);
+                              geen individuele endpoints per delta
 ```
 
 ### Reguliere collectie-endpoints en ETag
@@ -210,6 +209,15 @@ lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
 ontlasten.
 
 ### Delta's ophalen
+
+Hoewel individuele delta-events bestaan als unieke objecten in de
+synchronisatie, worden ze door de provider niet als afzonderlijk opvraagbare
+REST-resources (zoals `GET /resources/deltas/57`) aangeboden. Delta's hebben
+immers alleen waarde in een aaneengesloten chronologische reeks; een losse delta
+bevragen dient geen synchronisatiedoel. Bovendien zou dit leiden tot een
+overload aan afzonderlijke HTTP-requests (_chatty API_). Daarom worden delta's
+alleen ontsloten via een gecombineerde stroom of batch (als stroom via SSE of
+webhook, of als lijst via polling).
 
 #### Formaat van delta's
 
