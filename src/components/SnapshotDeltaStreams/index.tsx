@@ -69,7 +69,7 @@ export default function SnapshotDeltaStreams(): React.ReactNode {
           </div>
           <div className={styles.after}>
             <strong>Na het instappunt</strong>
-            <span>Alleen toepassen als de keten aansluit op prev_id = 42.</span>
+            <span>Delta's toepassen. Consistent in sync als ze aansluiten op de vorige snapshot of delta.</span>
           </div>
         </div>
       </div>

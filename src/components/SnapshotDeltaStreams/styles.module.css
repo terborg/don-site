@@ -2,6 +2,7 @@
   --stream-border: var(--don-grijs-300);
   --stream-line: var(--don-donkerblauw-300);
   --stream-muted: var(--don-grijs-600);
+  --stream-note-gap: 1.5rem;
   --stream-surface: var(--don-grijs-50);
   margin: 2rem 0;
   padding: 1rem;
@@ -26,7 +27,7 @@
 
 .diagram {
   display: grid;
-  gap: 1rem;
+  gap: var(--stream-note-gap);
 }
 
 .streamGrid {
@@ -202,12 +203,12 @@
 
 .entryLine {
   position: absolute;
-  top: 0.25rem;
-  height: 5rem;
+  top: calc(5.25rem - 1px);
+  bottom: calc(var(--stream-note-gap) * -1);
   left: 50%;
   z-index: 2;
-  width: 0;
-  border-left: 3px solid var(--don-robijnrood-500);
+  width: 4px;
+  background: var(--don-robijnrood-500);
 }
 
 .before,
@@ -305,12 +306,14 @@
     top: auto;
     bottom: auto;
     left: auto;
+    height: auto;
     align-items: flex-start;
     width: auto;
     margin: 0.25rem 0;
     padding: 0.5rem 0 0.5rem 0.75rem;
+    background: transparent;
     border-top: 3px solid var(--don-robijnrood-500);
-    border-left: 0;
+    transform: none;
   }
 
   .notes {
