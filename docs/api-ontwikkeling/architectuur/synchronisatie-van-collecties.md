@@ -115,8 +115,8 @@ collectie:
 
 ### Snapshot ophalen
 
-De provider biedt een lijst van beschikbare snapshots. De consumer vraagt deze
-op en kiest een beschikbaar snapshot als startpunt, doorgaans het meest recente:
+De provider publiceert een lijst van beschikbare snapshots. De consumer kiest
+daaruit een startpunt, doorgaans het meest recente:
 
 ```http
 GET /publicaties/snapshots
@@ -130,21 +130,17 @@ GET /publicaties/snapshots
 
 Er kan tijdelijk nog geen snapshot beschikbaar zijn, bijvoorbeeld wanneer een
 collectie nieuw is aangesloten of het eerste snapshot nog wordt opgebouwd. De
-consumer heeft dan nog geen cursor en mag ontvangen delta's niet toepassen,
-omdat er geen bekende basistoestand is waarop de delta-keten aansluit. Bij
-transporten die een live stroom bieden, zoals SSE, webhooks of een broker, kan
-de consumer alvast luisteren en ontvangen delta's tijdelijk bufferen. Dat is
-nuttig wanneer delta's vooruitlopen op een groot snapshot dat nog wordt gemaakt
-of nog wordt gedownload. Tegelijk blijft de consumer periodiek de snapshot-lijst
-opvragen. Dit bufferen is een optimalisatie, geen vereiste voor correctheid: de
-provider hoort namelijk te garanderen dat vanaf elk aangeboden snapshot de
-aansluitende delta-keten beschikbaar is.
+consumer heeft dan nog geen basistoestand en mag ontvangen delta's nog niet
+toepassen. Bij transporten die een live stroom bieden, zoals SSE, webhooks of
+een broker, kan de consumer die delta's alvast tijdelijk bufferen terwijl hij de
+snapshot-lijst periodiek blijft opvragen. Dat bufferen is een optimalisatie,
+geen vereiste voor correctheid: de provider hoort te garanderen dat vanaf elk
+aangeboden snapshot de aansluitende delta-keten beschikbaar is.
 
-De inhoud van een snapshot is een statische collectie: nadat het snapshot is
-gemaakt, verandert de inhoud ervan niet meer. Daardoor kan de provider de inhoud
-op verschillende manieren aanbieden, bijvoorbeeld met offset/limit-paginering,
-cursorpaginering, vaste chunks of bestanden. Welke vorm de provider kiest, is
-een transportkeuze; voor het patroon is vooral belangrijk dat alle delen samen
+De inhoud van een snapshot is statisch: nadat het snapshot is gemaakt, verandert
+het niet meer. Daardoor kan de provider die inhoud op verschillende manieren
+aanbieden, bijvoorbeeld met offset/limit-paginering, cursorpaginering, vaste
+chunks of bestanden. Voor het patroon is vooral belangrijk dat alle delen samen
 dezelfde snapshot-toestand representeren.
 
 Vervolgens haalt de consumer de inhoud op via het id. De respons levert ook de
@@ -165,18 +161,17 @@ GET /publicaties/snapshots/42?offset=200&limit=100 → {"id": 42, "total": 850, 
 ```
 
 Omdat snapshots statisch zijn, treedt er geen page skew op. De consumer laadt
-het nieuwe snapshot bij voorkeur in een aparte staging-area en schakelt pas over
-naar de nieuwe toestand — en verwijdert de vorige — als alle chunks succesvol
-zijn binnengekomen. Na de laatste chunk stelt de consumer het state-id in op
-`42`. Heeft de consumer tijdens het laden delta's gebufferd, dan verwijdert hij
-eerst alle delta's met een `id` tot en met `42`. Daarna verwerkt hij alleen de
-eerste gebufferde delta waarvan `prev_id` gelijk is aan `42`, en vervolgens de
-aansluitende keten. Ontbreekt die aansluiting, dan is de buffer onvoldoende en
-moet de consumer opnieuw herstellen vanaf een beschikbaar snapshot. De provider
-houdt snapshots beschikbaar gedurende een vaste retentieperiode zodat consumers
-de tijd hebben om ze volledig te downloaden. Verloopt een snapshot voordat de
-download is voltooid — kenbaar via `410 Gone` op een latere chunk — dan herhaalt
-de consumer het proces met het meest recente beschikbare snapshot.
+een snapshot bij voorkeur in een aparte staging-area en schakelt pas over naar
+de nieuwe toestand — en verwijdert de vorige — als alle chunks succesvol zijn
+binnengekomen. Na de laatste chunk stelt hij het state-id in op `42`. Heeft de
+consumer tijdens het laden delta's gebufferd, dan verwijdert hij eerst alle
+delta's met een `id` tot en met `42` en verwerkt daarna alleen de eerste
+gebufferde delta waarvan `prev_id` gelijk is aan `42`, gevolgd door de
+aansluitende keten. Ontbreekt die aansluiting, dan herstelt de consumer opnieuw
+vanaf een beschikbaar snapshot. De provider houdt snapshots lang genoeg
+beschikbaar om ze volledig te downloaden; verloopt een snapshot toch tussentijds
+— kenbaar via `410 Gone` op een latere chunk — dan herhaalt de consumer het
+proces met het meest recente beschikbare snapshot.
 
 Snapshot-chunks zijn statische bestanden en kunnen potentieel groot zijn. Ze
 lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
@@ -184,14 +179,12 @@ ontlasten.
 
 ### Delta's ophalen
 
-Hoewel individuele delta's bestaan als unieke objecten in de synchronisatie,
-worden ze door de provider niet als afzonderlijk opvraagbare REST-resources
-(zoals `GET /publicaties/deltas/57`) aangeboden. Delta's hebben immers alleen
-waarde in een aaneengesloten chronologische reeks; een losse delta bevragen
-dient geen synchronisatiedoel. Bovendien zou dit leiden tot een overload aan
-afzonderlijke HTTP-requests (_chatty API_). Daarom worden delta's alleen
-ontsloten via een gecombineerde stroom of batch (als stroom via SSE of webhook,
-of als lijst via polling).
+Individuele delta's worden niet als afzonderlijke REST-resources (zoals
+`GET /publicaties/deltas/57`) aangeboden. Hun waarde zit in de aaneengesloten
+chronologische reeks; een losse delta bevragen dient geen synchronisatiedoel en
+zou leiden tot een overload aan afzonderlijke HTTP-requests (_chatty API_).
+Daarom ontsluit de provider delta's alleen als gecombineerde stroom of batch:
+als stroom via SSE of webhook, of als lijst via polling.
 
 #### Formaat van delta's
 
