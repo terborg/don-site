@@ -12,8 +12,8 @@ import SnapshotDeltaStreams from '@site/src/components/SnapshotDeltaStreams';
 
 In gedistribueerde systemen hebben consumers vaak een actuele, lokale en vooral
 consistente kopie nodig van een _dynamische collectie_ binnen een REST API,
-bijvoorbeeld `/taken`. Daarmee kunnen zij data snel bevragen, lokaal verrijken
-of koppelen.
+bijvoorbeeld `/publicaties`. Daarmee kunnen zij data snel bevragen, lokaal
+verrijken of koppelen.
 
 ```mermaid
 graph RL
@@ -31,7 +31,7 @@ graph RL
 
 Het **snapshots-en-delta's-patroon** richt zich op _one-way state
 synchronization_: het in één richting synchroniseren van de actuele toestand van
-een collectie. _Snapshots_ bieden een instappunt; _delta's_ houden die toestand
+een collectie. _Snapshots_ bieden een startpunt; _delta's_ houden die toestand
 daarna efficiënt bij. Het patroon is niet bedoeld voor bidirectionele
 synchronisatie, conflictresolutie of volledige historische replay op basis van
 events.
@@ -43,11 +43,10 @@ tijdsvertraging — gegarandeerd identiek is aan de collectie bij de bron.
 
 ## Het snapshots-en-delta's-patroon
 
-Het **snapshots-en-delta's** (of _snapshots en incrementele updates_) patroon
-maakt de synchronisatie betrouwbaar door twee parallelle stromen te combineren:
-een laagfrequente stroom van volledige momentopnames en een hoogfrequente stroom
-van wijzigingen. De ene stroom biedt een veilig instappunt, de andere stroom
-zorgt ervoor dat de lokale kopie actueel blijft.
+Het **snapshots-en-delta's** patroon maakt synchronisatie betrouwbaar door twee
+parallelle stromen te combineren: een laagfrequente stroom van snapshots en een
+hoogfrequente stroom van delta's. De ene stroom biedt een veilig startpunt, de
+andere stroom zorgt ervoor dat de lokale kopie actueel blijft.
 
 Snapshots en delta's krijgen daarom een positie in dezelfde reeks. In dit
 artikel noemen we die positie een **state-id**. Een snapshot bevat de toestand
@@ -56,10 +55,10 @@ naar een volgende state-id.
 
 <SnapshotDeltaStreams />
 
-### Snapshots: instappunten
+### Snapshots
 
 Een snapshot is een volledige, consistente weergave van de collectie op één
-specifiek moment. Daarmee kan een consumer beginnen zonder de volledige
+specifiek moment. Daarmee kan een consumer starten zonder de volledige
 wijzigingsgeschiedenis te kennen. Dat is nodig bij de eerste start, maar ook bij
 herstel na verlies van lokale status, verlopen retentie of een breuk in de
 delta-keten.
@@ -68,30 +67,40 @@ Een snapshot is pas bruikbaar als duidelijk is bij welke positie in de reeks het
 hoort. Die positie vormt de verticale lijn in het patroon: alles tot en met dat
 punt zit al in het snapshot, alles daarna moet via delta's worden verwerkt.
 
-### Delta's: actueel blijven via updates
+### Delta's
 
-Delta's beschrijven de stapsgewijze wijzigingen vanaf een bekende positie. Elk
-delta-event brengt de collectie van de ene toestand naar de direct
-daaropvolgende toestand. Om de lokale kopie consistent te houden, moet de
-delta-keten aaneengesloten zijn: een consumer kan zijn toestand alleen veilig
-doorschuiven als een nieuwe delta exact aansluit op de toestand of positie van
-de laatst succesvol verwerkte delta.
+Delta's beschrijven de stap van een bekende toestand naar de daaropvolgende
+toestand. Om de lokale kopie consistent te houden, moet de delta-keten
+aaneengesloten zijn: een consumer kan zijn toestand alleen veilig doorschuiven
+als een nieuwe delta exact aansluit op de positie van de laatst succesvol
+verwerkte snapshot of delta.
 
 Delta's vormen de reguliere route om de lokale kopie continu actueel te houden
 zonder telkens de volledige dataset opnieuw op te hoeven vragen. Ze bevatten
 niet alleen de notificatie dát er iets is veranderd, maar dragen ook direct de
-inhoud van de wijziging (de mutatie) met zich mee.
+inhoud van die wijziging met zich mee.
 
-## Uitwerking voor REST API's
+### State-ids
 
-In deze invulling kiest de provider de concrete vorm van het state-id,
-bijvoorbeeld een oplopend transactienummer, tijdstempel, UUID of hash. Elk
-state-id moet uniek zijn binnen de collectie.
+Een state-id identificeert een specifieke, stabiele toestand van de collectie.
+Conceptueel lijkt dat op een [`ETag`](https://en.wikipedia.org/wiki/HTTP_ETag),
+maar een state-id heeft een sterkere semantiek: het markeert het resultaat van
+een atomaire overgang. Een delta beschrijft precies de stap van één state-id
+naar het volgende — daartussenin is de collectie consistent. Een `ETag` is
+gekoppeld aan een HTTP-representatie en biedt die atomiciteitsgarantie niet per
+se.
+
+De provider kiest de concrete vorm van het state-id, bijvoorbeeld een oplopend
+transactienummer, tijdstempel, UUID of hash. Elk state-id moet uniek zijn binnen
+de collectie.
+
+## REST API's
 
 De onderstaande invulling is een aanbeveling. Het patroon zelf — snapshot,
-delta, state-id — is leidend; de URL-structuur en veldnamen zijn niet verplicht.
-Wie de aanbeveling volgt, maakt zijn API direct bruikbaar voor consumers die het
-patroon kennen en respecteert hierin zoveel mogelijk de HTTP-standaarden.
+delta, state-id — is leidend; de URL-structuur zijn hier een mogelijke opzet
+voor. Wie de aanbeveling volgt, maakt zijn API direct bruikbaar voor consumers
+die het patroon kennen en respecteert hierin zoveel mogelijk de
+HTTP-standaarden.
 
 Het patroon voegt twee sub-resources toe aan een (eventueel bestaande)
 collectie:
@@ -206,14 +215,14 @@ ontlasten.
 
 ### Delta's ophalen
 
-Hoewel individuele delta-events bestaan als unieke objecten in de
-synchronisatie, worden ze door de provider niet als afzonderlijk opvraagbare
-REST-resources (zoals `GET /resources/deltas/57`) aangeboden. Delta's hebben
-immers alleen waarde in een aaneengesloten chronologische reeks; een losse delta
-bevragen dient geen synchronisatiedoel. Bovendien zou dit leiden tot een
-overload aan afzonderlijke HTTP-requests (_chatty API_). Daarom worden delta's
-alleen ontsloten via een gecombineerde stroom of batch (als stroom via SSE of
-webhook, of als lijst via polling).
+Hoewel individuele delta's bestaan als unieke objecten in de synchronisatie,
+worden ze door de provider niet als afzonderlijk opvraagbare REST-resources
+(zoals `GET /resources/deltas/57`) aangeboden. Delta's hebben immers alleen
+waarde in een aaneengesloten chronologische reeks; een losse delta bevragen
+dient geen synchronisatiedoel. Bovendien zou dit leiden tot een overload aan
+afzonderlijke HTTP-requests (_chatty API_). Daarom worden delta's alleen
+ontsloten via een gecombineerde stroom of batch (als stroom via SSE of webhook,
+of als lijst via polling).
 
 #### Formaat van delta's
 
@@ -240,8 +249,8 @@ delta expliciet aangeeft op welke vorige toestand hij aansluit.
 ```
 
 Een delta bevat altijd een array van operaties (`operations`), ook als er maar
-één wijziging is. Zo kan de provider meerdere samenhangende mutaties in één keer
-laten toepassen.
+één wijziging is. Zo kan de provider meerdere samenhangende wijzigingen in één
+keer laten toepassen.
 
 Elke operatie heeft minimaal een `type`:
 
@@ -300,7 +309,7 @@ items-lijst betekent dat de consumer actueel is.
 
 Om te voorkomen dat de respons op `GET /resources/deltas` een gigantisch object
 wordt (bijvoorbeeld als de consumer lang offline is geweest en er inmiddels
-duizenden mutaties zijn), past de provider twee mechanismen toe:
+duizenden wijzigingen zijn), past de provider twee mechanismen toe:
 
 1. **Geforceerde paginering via `limit`:** De provider levert nooit alle
    openstaande delta's in één keer, maar dwingt een maximum af (bijvoorbeeld
