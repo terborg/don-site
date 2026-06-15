@@ -34,7 +34,9 @@ synchronization_: het in één richting synchroniseren van de actuele toestand v
 een collectie. _Snapshots_ bieden een startpunt; _delta's_ houden die toestand
 daarna efficiënt bij. Het patroon is niet bedoeld voor bidirectionele
 synchronisatie, conflictresolutie of volledige historische replay op basis van
-events.
+events. Ook is het minder geschikt voor gefilterde of wisselende
+deelverzamelingen. Dat betekent dat de collectie of view vooraf door de
+provider moet zijn gedefinieerd.
 
 De garantie van het patroon is
 [sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
@@ -240,8 +242,8 @@ items-lijst betekent dat de consumer actueel is en na het polling-interval
 opnieuw kan opvragen.
 
 Ontvangt de consumer een delta waarvan `prev_id` niet aansluit bij de huidige
-state-id, dan is er een hiaat in de keten en moet hij opnieuw beginnen vanaf
-een snapshot.
+state-id, dan is er een hiaat in de keten en moet hij opnieuw beginnen vanaf een
+snapshot.
 
 Als het gevraagde state-id niet meer bekend is bij de provider, antwoordt die
 met `410 Gone`:
@@ -277,17 +279,18 @@ data: {"id": 63, "prev_id": 57, "operations": [{"type": "delete", "resource_id":
 
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met het
 huidige state-id. Een mismatch signaleert een hiaat en leidt tot hetzelfde
-herstelpad als bij polling. Een open SSE-verbinding kan na opzet geen
-`410 Gone` meer ontvangen; verloopt het state-id tijdens de sessie, dan sluit
-de provider de verbinding. Bij herverbinding stuurt de consumer opnieuw
-`Last-Event-ID`; als dat state-id inmiddels niet meer bekend is, antwoordt de
-provider alsnog met `410 Gone`.
+herstelpad als bij polling. Een open SSE-verbinding kan na opzet geen `410 Gone`
+meer ontvangen; verloopt het state-id tijdens de sessie, dan sluit de provider
+de verbinding. Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; als
+dat state-id inmiddels niet meer bekend is, antwoordt de provider alsnog met
+`410 Gone`.
 
 #### CloudEvents
 
 Delta's kunnen desgewenst in een [CloudEvents](https://cloudevents.io/)-envelop
-worden verpakt. Dat standaardiseert de envelop; de delta-velden in `data`
-blijven ongewijzigd.
+worden verpakt. Dat is prima, zolang de delta-semantiek behouden blijft: één
+event moet nog steeds één delta representeren, inclusief de atomaire set
+wijzigingen in `operations`.
 
 ## Retentie van snapshots en delta's
 
