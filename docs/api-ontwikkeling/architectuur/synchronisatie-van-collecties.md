@@ -137,9 +137,6 @@ GET /publicaties/snapshots
   }
 ```
 
-Vervolgens haalt de consumer de inhoud op via de bijbehorende link. Die link kan
-relatief zijn binnen dezelfde API, maar ook absoluut.
-
 De inhoud van een snapshot is een _statische collectie_: nadat het snapshot is
 gemaakt, verandert het niet meer. Daardoor kan de provider die inhoud op
 verschillende manieren aanbieden, bijvoorbeeld met paginering, vaste chunks of
@@ -148,6 +145,8 @@ zijn. Ze lenen zich daardoor voor distributie via een CDN, wat een API gateway
 kan ontlasten. Voor het patroon is vooral belangrijk dat alle delen samen
 dezelfde snapshot-toestand representeren. De provider hoort te garanderen dat
 vanaf elk aangeboden snapshot de aansluitende delta-keten beschikbaar is.
+Vervolgens haalt de consumer de inhoud op via de bijbehorende link. Die link kan
+relatief zijn binnen dezelfde API, maar ook absoluut.
 
 De provider houdt snapshots lang genoeg beschikbaar om ze volledig te
 downloaden; verloopt een snapshot toch tussentijds — kenbaar via `410 Gone` op
@@ -160,8 +159,8 @@ Individuele delta's worden niet als afzonderlijke REST-resources (zoals
 `GET /publicaties/deltas/57`) aangeboden. Hun waarde zit in de aaneengesloten
 chronologische reeks; een losse delta bevragen dient geen synchronisatiedoel en
 zou leiden tot een overload aan afzonderlijke HTTP-requests (_chatty API_).
-Daarom ontsluit de provider delta's alleen als gecombineerde stroom of batch:
-als stroom via SSE of webhook, of als lijst via polling.
+Daarom ontsluit de provider delta's alleen als gecombineerde stroom of batch.
+Hieronder werken we daarvoor polling en SSE uit.
 
 #### Structuur van delta's
 
@@ -189,35 +188,24 @@ delta expliciet aangeeft op welke vorige toestand hij aansluit.
 
 Een delta bevat altijd een array van operaties (`operations`), ook als er maar
 één wijziging is. Zo kan de provider meerdere samenhangende wijzigingen in één
-keer laten toepassen.
-
-Elke operatie heeft minimaal een `type`:
-
-- `create`: voeg een nieuwe resource toe.
-- `update`: wijzig of vervang een bestaande resource.
-- `delete`: verwijder een resource; het `resource`-veld ontbreekt dan bewust
-  (tombstone).
+keer laten toepassen. Elke operatie heeft minimaal een `type`, bijvoorbeeld
+`create`, `update` of `delete`. Bij een `delete`-operatie ontbreekt het
+`resource`-veld bewust (tombstone).
 
 In de aanbevolen vorm bevat `resource` steeds de volledige resulterende weergave
-van het record (_Event-Carried State Transfer_). Dat is het meest robuust en
-sterk aanbevolen: de consumer hoeft geen vorige toestand op te halen om de
-wijziging te begrijpen, en retries blijven idempotent.
-
-Het veld `resource_id` staat bewust ook buiten het `resource`-object. Bij een
-`delete`-operatie is dat noodzakelijk, omdat er dan geen `resource` meer is.
-Daarnaast kunnen consumers en tussenliggende brokers zo filteren en routeren op
-ID en type zonder eerst een zwaardere payload te deserialiseren.
+van het record (_Event-Carried State Transfer_). Dat is de voorkeursvorm: de
+consumer hoeft geen vorige toestand op te halen om de wijziging te begrijpen, en
+retries blijven idempotent. Het veld `resource_id` staat ook buiten het
+`resource`-object, zodat de getroffen resource ook bij een `delete`-operatie
+eenduidig identificeerbaar blijft.
 
 Alleen als resources extreem groot zijn en bandbreedte de doorslag geeft, kan de
 provider in plaats van de volledige resource ook een
 [JSON Merge Patch (RFC 7396)](https://datatracker.ietf.org/doc/html/rfc7396) of
 [JSON Patch (RFC 6902)](https://datatracker.ietf.org/doc/html/rfc6902)
-meesturen. Dat maakt de consumer-logica wel complexer, omdat patching pad- en
-schema-afhankelijk is en correct herstel na _out-of-order_ events lastiger
-wordt.
-
-In deze uitwerking kan een state-id bijvoorbeeld terugkomen als `ETag` op een
-snapshot of als event-`id` dat bij SSE via `Last-Event-ID` wordt teruggestuurd.
+meesturen. Dat is een uitzondering op de voorkeursvorm en maakt de
+consumer-logica complexer, omdat patching pad- en schema-afhankelijk is en
+correct herstel na _out-of-order_ events lastiger wordt.
 
 #### Polling
 
@@ -243,38 +231,29 @@ GET /publicaties/deltas?after=42&limit=10
   }
 ```
 
-De consumer past elke delta toe en zet het state-id naar het `id` van de laatste
-verwerkte delta. Ontvangt de consumer onverhoopt een delta waarvan het `id` al
-gelijk is aan of ouder is dan het huidige state-id (bijvoorbeeld bij
-netwerk-retries), dan negeert de consumer deze (idempotentie). Een lege
-items-lijst betekent dat de consumer actueel is.
+Dit gedraagt zich als cursor-based paginering, maar gebruikt expliciet
+`after=<state-id>` om de volgende stap in de delta-keten op te vragen. Via
+`limit` blijft de responsgrootte beheersbaar. De consumer verwerkt delta's in
+volgorde, zet zijn state-id naar het `id` van de laatste verwerkte delta en
+vraagt daarna de volgende pagina op met `after=<nieuw_state_id>`. Een lege
+items-lijst betekent dat de consumer actueel is en na het polling-interval
+opnieuw kan opvragen.
 
-Om te voorkomen dat de respons op `GET /publicaties/deltas` een gigantisch
-object wordt (bijvoorbeeld als de consumer lang offline is geweest en er
-inmiddels duizenden wijzigingen zijn), past de provider twee mechanismen toe:
+Ontvangt de consumer een delta waarvan `prev_id` niet aansluit bij de huidige
+state-id, dan is er een hiaat in de keten en moet hij opnieuw beginnen vanaf
+een snapshot.
 
-1. **Geforceerde paginering via `limit`:** De provider levert nooit alle
-   openstaande delta's in één keer, maar dwingt een maximum af (bijvoorbeeld
-   `limit=100`). De consumer verwerkt deze pagina, werkt zijn lokale status bij
-   naar de `id` van de laatste verwerkte delta, en vraagt de volgende pagina op
-   (`?after=<nieuwe_id>&limit=100`). Dit herhaalt zich totdat een lege lijst
-   wordt teruggegeven.
-2. **De `410 Gone`-vangrail:** Als de consumer zó ver achterloopt dat de delta's
-   niet meer in de retentieperiode van de provider vallen (of wanneer het
-   opvragen van de achterstand te zwaar is), weigert de provider de delta's te
-   leveren en antwoordt met `410 Gone`. Dit dwingt de consumer om een nieuw,
-   statisch en eventueel via CDN gecached snapshot te downloaden. Dat is veel
-   efficiënter voor grootschalig herstel.
-
-Als het state-id niet meer bekend is bij de provider, antwoordt de provider met
-`410 Gone`:
+Als het gevraagde state-id niet meer bekend is bij de provider, antwoordt die
+met `410 Gone`:
 
 ```http
 GET /publicaties/deltas?after=99
 → 410 Gone
 ```
 
-De consumer weet dan dat hij opnieuw een snapshot moet ophalen.
+Ook dan moet de consumer opnieuw beginnen vanaf een snapshot. Voor polling is
+dat dus het algemene herstelpad: bij een gat in de keten of een onbekend
+state-id opnieuw beginnen vanaf een snapshot.
 
 #### Streaming (SSE)
 
@@ -297,121 +276,20 @@ data: {"id": 63, "prev_id": 57, "operations": [{"type": "delete", "resource_id":
 ```
 
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met het
-huidige state-id. Een mismatch signaleert een hiaat: de consumer sluit de
-verbinding en behandelt dit identiek aan een `410 Gone`.
-
-Een open SSE-verbinding kan geen `410 Gone` ontvangen: de HTTP-statuscode ligt
-vast op `200 OK` zodra de verbinding is opgezet. Raakt het state-id verlopen
-terwijl de verbinding open staat, dan sluit de provider de verbinding:
-
-```http
-id: 57
-data: {"id": 57, "prev_id": 42, ...}
-
-← verbinding gesloten door provider
-```
-
-Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; als dat state-id
-inmiddels niet meer bekend is, antwoordt de provider met `410 Gone`:
-
-```http
-GET /publicaties/deltas
-Accept: text/event-stream
-Last-Event-ID: 99
-→ 410 Gone
-```
-
-De consumer haalt dan een nieuw snapshot op en opent daarna een nieuwe
-verbinding met het state-id van dat snapshot.
-
-Een robuuste consumer behandelt beide situaties — mismatch en `410 Gone` — als
-hetzelfde herstelpad: verbinding verbreken, nieuw snapshot ophalen, opnieuw
-verbinden met het state-id van dat snapshot.
-
-#### Webhooks
-
-De provider pusht delta's naar een endpoint van de consumer zodra ze beschikbaar
-zijn:
-
-```http
-POST https://consumer.example.nl/webhook/resources
-Content-Type: application/json
-
-{
-  "id": 57,
-  "prev_id": 42,
-  "operations": [
-    {
-      "type": "update",
-      "resource_id": "item-abc",
-      "resource": {
-        "id": "item-abc",
-        "name": "Resource ABC - Gewijzigd"
-      }
-    }
-  ]
-}
-```
-
-De consumer valideert `prev_id` bij elk ontvangen bericht. Omdat webhooks
-asynchroon zijn en berichten _out-of-order_ kunnen arriveren, signaleert een
-mismatch met het state-id in eerste instantie een _gap_ in de correcte volgorde.
-Een robuuste consumer buffert de onverwachte delta dan tijdelijk. Als de
-ontbrekende voorgaande delta niet binnen een redelijke termijn arriveert, neemt
-de consumer aan dat de delta-keten is gereset of het state-id verlopen is, en
-haalt een nieuw snapshot op via de snapshot-API.
-
-Bij polling en SSE initieert de consumer alle verbindingen, waardoor alleen
-eenzijdige authenticatie nodig is. Webhooks — waarbij de provider actief naar de
-consumer pusht — vereisen een publiek bereikbaar consumer-endpoint en
-tweezijdige authenticatie. Bovendien moet de consumer de herkomst van elk
-inkomend bericht verifiëren, bijvoorbeeld via een HMAC-handtekening over de
-payload die de provider als request-header meestuurt. Zo kunnen alleen
-geautoriseerde providers delta's aanleveren.
+huidige state-id. Een mismatch signaleert een hiaat en leidt tot hetzelfde
+herstelpad als bij polling. Een open SSE-verbinding kan na opzet geen
+`410 Gone` meer ontvangen; verloopt het state-id tijdens de sessie, dan sluit
+de provider de verbinding. Bij herverbinding stuurt de consumer opnieuw
+`Last-Event-ID`; als dat state-id inmiddels niet meer bekend is, antwoordt de
+provider alsnog met `410 Gone`.
 
 #### CloudEvents
 
-Delta's kunnen in een [CloudEvents](https://cloudevents.io/)-envelop worden
-verpakt, ongeacht het transportmechanisme:
+Delta's kunnen desgewenst in een [CloudEvents](https://cloudevents.io/)-envelop
+worden verpakt. Dat standaardiseert de envelop; de delta-velden in `data`
+blijven ongewijzigd.
 
-```json
-{
-  "specversion": "1.0",
-  "type": "nl.example.resources.update",
-  "source": "/resources",
-  "id": "57",
-  "data": {
-    "id": 57,
-    "prev_id": 42,
-    "operations": [
-      {
-        "type": "update",
-        "resource_id": "item-abc",
-        "resource": {...}
-      }
-    ]
-  }
-}
-```
-
-CloudEvents standaardiseert de envelop; de delta-velden in `data` blijven
-ongewijzigd. Let op: het envelope-veld `id` is per CloudEvents-specificatie
-altijd een string (`"57"`), terwijl het `id` in `data` de door de provider
-bepaalde vorm behoudt (in de voorbeelden een getal).
-
-## Implementatie-aandachtspunten
-
-### Gegarandeerde atomiciteit (Transactionele Outbox)
-
-Om operaties op de juiste manier te groeperen als provider zonder
-dataconsistentie te verliezen, kan het beste het
-[Transactionele outbox](https://microservices.io/patterns/data/transactional-outbox.html)-patroon
-worden gebruikt. Daarbij worden de databasewijzigingen aan de resource(s) én de
-logvermelding met de _operations_-array als één database-transactie opgeslagen.
-Een asynchrone worker leest vervolgens de outbox-tabel uit en deelt deze als
-gegarandeerd correcte berichten via polling, webhooks of de message broker.
-
-### Geen wijzigingen verliezen tijdens snapshotten
+## Retentie van snapshots en delta's
 
 Een cruciale verantwoordelijkheid van de provider is de overlap tussen
 snapshot-retentie en delta-retentie. Het downloaden van een groot snapshot kost
@@ -430,17 +308,16 @@ geladen, verwijdert de consumer alles wat al in het snapshot zit en verwerkt hij
 alleen de delta's die op de snapshotpositie aansluiten. Dat kan de hersteltijd
 verkorten, maar is niet nodig als de provider de genoemde overlap garandeert.
 
-### Retentie van snapshots en delta's
-
 De provider moet snapshots en delta's beschikbaar houden voor een
 retentieperiode die groot genoeg is voor een consumer om ze te verwerken. Daarna
 mag de provider ze verwijderen. Bij polling en SSE-herverbinding ontvangt de
-consumer dan `410 Gone`; bij webhooks en broker detecteert de consumer een
-`prev_id`-mismatch. In beide gevallen is het state-id verlopen en moet opnieuw
-een snapshot worden opgehaald.
+consumer dan `410 Gone`. Daarmee weet hij dat het state-id is verlopen en dat
+opnieuw een snapshot moet worden opgehaald.
 
 ## Gerelateerde patronen
 
+- Voor het betrouwbaar genereren en publiceren van delta's kan een provider het
+  [Transactionele outbox](./transactionele-outbox.md)-patroon toepassen.
 - Voor navigatie door de snapshot-pagina's (en een vergelijking van
   pagineerstrategieën), zie
   [Paginering van collecties](./paginering-van-collecties.md).
