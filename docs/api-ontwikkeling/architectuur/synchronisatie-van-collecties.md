@@ -119,8 +119,9 @@ collectie:
 
 ### Snapshots ophalen
 
-De provider publiceert een lijst van beschikbare snapshots. De consumer kiest
-daaruit een startpunt, doorgaans het meest recente op basis van `created_at`:
+De provider publiceert een lijst van beschikbare snapshots, gesorteerd met het
+meest recente snapshot eerst. De consumer kan het eerste item in die lijst als
+startpunt kiezen:
 
 ```http
 GET /publicaties/snapshots
@@ -130,7 +131,6 @@ GET /publicaties/snapshots
       {
         "id": 42,
         "href": "/publicaties/snapshots/42",
-        "created_at": "2026-05-13T10:00:00Z",
         "total": 850
       }
     ]
@@ -163,7 +163,7 @@ zou leiden tot een overload aan afzonderlijke HTTP-requests (_chatty API_).
 Daarom ontsluit de provider delta's alleen als gecombineerde stroom of batch:
 als stroom via SSE of webhook, of als lijst via polling.
 
-#### Formaat van delta's
+#### Structuur van delta's
 
 Een delta is de concrete schakel tussen de garanties hierboven en de
 implementatie hieronder: de consumer kan alleen veilig doorschuiven als elke
