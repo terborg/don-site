@@ -73,7 +73,9 @@ Delta's beschrijven de stap van een bekende toestand naar de daaropvolgende
 toestand. Om de lokale kopie consistent te houden, moet de delta-keten
 aaneengesloten zijn: een consumer kan zijn toestand alleen veilig doorschuiven
 als een nieuwe delta exact aansluit op de positie van de laatst succesvol
-verwerkte snapshot of delta.
+verwerkte snapshot of delta. Functioneel betekent dit dat een delta ook de
+voorgaande positie in de reeks meedraagt, zodat een consumer kan controleren dat
+die aansluiting klopt.
 
 Delta's vormen de reguliere route om de lokale kopie continu actueel te houden
 zonder telkens de volledige dataset opnieuw op te hoeven vragen. Ze bevatten
@@ -82,100 +84,75 @@ inhoud van die wijziging met zich mee.
 
 ### State-ids
 
-Een state-id identificeert een specifieke, stabiele toestand van de collectie.
-Conceptueel lijkt dat op een [`ETag`](https://en.wikipedia.org/wiki/HTTP_ETag),
-maar een state-id heeft een sterkere semantiek: het markeert het resultaat van
-een atomaire overgang. Een delta beschrijft precies de stap van één state-id
-naar het volgende — daartussenin is de collectie consistent. Een `ETag` is
-gekoppeld aan een HTTP-representatie en biedt die atomiciteitsgarantie niet per
-se.
+Een state-id identificeert een specifieke, stabiele toestand van de collectie:
+het is de identifier van een positie in de reeks. Conceptueel lijkt dat op een
+[`ETag`](https://en.wikipedia.org/wiki/HTTP_ETag), maar een state-id heeft een
+sterkere semantiek: het markeert het resultaat van een atomaire overgang. Een
+delta beschrijft precies de stap van één state-id naar het volgende —
+daartussenin is de collectie consistent. Een `ETag` hoort bij een representatie
+en biedt die atomiciteitsgarantie niet per se.
 
 De provider kiest de concrete vorm van het state-id, bijvoorbeeld een oplopend
-transactienummer, tijdstempel, UUID of hash. Elk state-id moet uniek zijn binnen
-de collectie.
+transactienummer, tijdstempel, UUID of hash. De enige eis is dat een state-id
+uniek moet zijn binnen de collectie.
 
 ## REST API's
 
 Hieronder werken we het snapshots-en-delta's patroon uit voor REST API's. Het
-patroon zelf — snapshot, delta, state-id — is leidend; de URL-structuur zijn
+patroon zelf — snapshots, delta's, state-ids — is leidend; de URL-structuur is
 hier een mogelijke opzet voor. Wie de aanbeveling volgt, maakt zijn API direct
 bruikbaar voor consumers die het patroon kennen en respecteert hierin zoveel
-mogelijk de HTTP-standaarden.
+mogelijk de standaarden.
+
+### Resourcemodel
 
 Het patroon voegt twee sub-resources toe aan een (eventueel bestaande)
 collectie:
 
 ```text
-/publicaties             → de collectie zelf (ongewijzigd)
-/publicaties/snapshots   → lijst van beschikbare snapshots
+/publicaties              → de collectie zelf (ongewijzigd)
+/publicaties/snapshots    → lijst van beschikbare snapshots
 /publicaties/snapshots/42 → inhoud van snapshot 42 (statische collectie)
 /publicaties/deltas       → lijst of stroom van delta's (polling of SSE);
                             geen individuele endpoints per delta
 ```
 
-### Snapshot ophalen
+### Snapshots ophalen
 
 De provider publiceert een lijst van beschikbare snapshots. De consumer kiest
-daaruit een startpunt, doorgaans het meest recente:
+daaruit een startpunt, doorgaans het meest recente op basis van `created_at`:
 
 ```http
 GET /publicaties/snapshots
 → 200 OK
   {
     "items": [
-      {"id": 42, "created_at": "2026-05-13T10:00:00Z", "total": 850}
+      {
+        "id": 42,
+        "href": "/publicaties/snapshots/42",
+        "created_at": "2026-05-13T10:00:00Z",
+        "total": 850
+      }
     ]
   }
 ```
 
-Er kan tijdelijk nog geen snapshot beschikbaar zijn, bijvoorbeeld wanneer een
-collectie nieuw is aangesloten of het eerste snapshot nog wordt opgebouwd. De
-consumer heeft dan nog geen basistoestand en mag ontvangen delta's nog niet
-toepassen. Bij transporten die een live stroom bieden, zoals SSE, webhooks of
-een broker, kan de consumer die delta's alvast tijdelijk bufferen terwijl hij de
-snapshot-lijst periodiek blijft opvragen. Dat bufferen is een optimalisatie,
-geen vereiste voor correctheid: de provider hoort te garanderen dat vanaf elk
-aangeboden snapshot de aansluitende delta-keten beschikbaar is.
+Vervolgens haalt de consumer de inhoud op via de bijbehorende link. Die link kan
+relatief zijn binnen dezelfde API, maar ook absoluut.
 
-De inhoud van een snapshot is statisch: nadat het snapshot is gemaakt, verandert
-het niet meer. Daardoor kan de provider die inhoud op verschillende manieren
-aanbieden, bijvoorbeeld met offset/limit-paginering, cursorpaginering, vaste
-chunks of bestanden. Voor het patroon is vooral belangrijk dat alle delen samen
-dezelfde snapshot-toestand representeren.
+De inhoud van een snapshot is een _statische collectie_: nadat het snapshot is
+gemaakt, verandert het niet meer. Daardoor kan de provider die inhoud op
+verschillende manieren aanbieden, bijvoorbeeld met paginering, vaste chunks of
+bestanden. Snapshot-chunks zijn statische bestanden en kunnen potentieel groot
+zijn. Ze lenen zich daardoor voor distributie via een CDN, wat een API gateway
+kan ontlasten. Voor het patroon is vooral belangrijk dat alle delen samen
+dezelfde snapshot-toestand representeren. De provider hoort te garanderen dat
+vanaf elk aangeboden snapshot de aansluitende delta-keten beschikbaar is.
 
-Vervolgens haalt de consumer de inhoud op via het id. De respons levert ook de
-bijbehorende `ETag`:
-
-```http
-GET /publicaties/snapshots/42?limit=100
-→ 200 OK
-  ETag: "42"
-
-  {"id": 42, "total": 850, "items": [...]}
-```
-
-```text
-GET /publicaties/snapshots/42?offset=100&limit=100 → {"id": 42, "total": 850, "items": [...]}
-GET /publicaties/snapshots/42?offset=200&limit=100 → {"id": 42, "total": 850, "items": [...]}
-...
-```
-
-Omdat snapshots statisch zijn, treedt er geen page skew op. De consumer laadt
-een snapshot bij voorkeur in een aparte staging-area en schakelt pas over naar
-de nieuwe toestand — en verwijdert de vorige — als alle chunks succesvol zijn
-binnengekomen. Na de laatste chunk stelt hij het state-id in op `42`. Heeft de
-consumer tijdens het laden delta's gebufferd, dan verwijdert hij eerst alle
-delta's met een `id` tot en met `42` en verwerkt daarna alleen de eerste
-gebufferde delta waarvan `prev_id` gelijk is aan `42`, gevolgd door de
-aansluitende keten. Ontbreekt die aansluiting, dan herstelt de consumer opnieuw
-vanaf een beschikbaar snapshot. De provider houdt snapshots lang genoeg
-beschikbaar om ze volledig te downloaden; verloopt een snapshot toch tussentijds
-— kenbaar via `410 Gone` op een latere chunk — dan herhaalt de consumer het
-proces met het meest recente beschikbare snapshot.
-
-Snapshot-chunks zijn statische bestanden en kunnen potentieel groot zijn. Ze
-lenen zich daardoor voor distributie via een CDN, wat een API gateway kan
-ontlasten.
+De provider houdt snapshots lang genoeg beschikbaar om ze volledig te
+downloaden; verloopt een snapshot toch tussentijds — kenbaar via `410 Gone` op
+een latere chunk — dan herhaalt de consumer het proces met het meest recente
+beschikbare snapshot.
 
 ### Delta's ophalen
 
@@ -238,6 +215,9 @@ provider in plaats van de volledige resource ook een
 meesturen. Dat maakt de consumer-logica wel complexer, omdat patching pad- en
 schema-afhankelijk is en correct herstel na _out-of-order_ events lastiger
 wordt.
+
+In deze uitwerking kan een state-id bijvoorbeeld terugkomen als `ETag` op een
+snapshot of als event-`id` dat bij SSE via `Last-Event-ID` wordt teruggestuurd.
 
 #### Polling
 
@@ -392,7 +372,7 @@ geautoriseerde providers delta's aanleveren.
 #### CloudEvents
 
 Delta's kunnen in een [CloudEvents](https://cloudevents.io/)-envelop worden
-verpakt, ongeacht het transportmechanisme (HTTP, SSE, broker):
+verpakt, ongeacht het transportmechanisme:
 
 ```json
 {
