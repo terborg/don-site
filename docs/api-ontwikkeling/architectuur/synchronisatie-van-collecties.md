@@ -89,12 +89,14 @@ punt zit al in het snapshot, alles daarna moet via delta's worden verwerkt.
 ### Delta's
 
 Delta's beschrijven de stap van een bekende toestand naar de daaropvolgende
-toestand. Om de lokale kopie consistent te houden, moet de delta-keten
-aaneengesloten zijn: een consumer kan zijn toestand alleen veilig doorschuiven
-als een nieuwe delta exact aansluit op de positie van de laatst succesvol
-verwerkte snapshot of delta. Functioneel betekent dit dat een delta ook de
-voorgaande positie in de reeks meedraagt, zodat een consumer kan controleren dat
-die aansluiting klopt.
+toestand. Conceptueel is een delta vergelijkbaar met een atomaire 'commit' of
+database-transactie: het bevat een set mutaties die de collectie in één stap van
+de ene consistente toestand naar de volgende brengt. Om de lokale kopie
+consistent te houden, moet de delta-keten aaneengesloten zijn: een consumer kan
+zijn toestand alleen veilig doorschuiven als een nieuwe delta exact aansluit op
+de positie van de laatst succesvol verwerkte snapshot of delta. Functioneel
+betekent dit dat een delta ook de voorgaande positie in de reeks meedraagt,
+zodat een consumer kan controleren dat die aansluiting klopt.
 
 Delta's vormen de reguliere route om de lokale kopie continu actueel te houden
 zonder telkens de volledige dataset opnieuw op te hoeven vragen. Ze bevatten
@@ -309,13 +311,15 @@ provider de verbinding. Bij herverbinding stuurt de consumer opnieuw
 `Last-Event-ID`; als dat state-id inmiddels niet meer bekend is, antwoordt de
 provider alsnog met `410 Gone`.
 
-#### CloudEvents
+:::note CloudEvents
 
-Wanneer [CloudEvents](../standaarden/cloudevents) als envelop wordt gebruikt,
-kunnen delta's hierin worden verpakt. Dit is goed mogelijk mits de
-delta-semantiek behouden blijft: één event dient nog steeds één delta te
-representeren (inclusief het `id` en `prev_id`), waarbij de atomaire set
-wijzigingen (`operations`) in de `data`-payload van het event wordt geplaatst.
+Delta's kunnen desgewenst in een
+[CloudEvents](../standaarden/cloudevents)-envelop worden verpakt. Dit is goed
+mogelijk, mits de delta-semantiek behouden blijft: één event dient nog steeds
+één delta te representeren, inclusief de atomaire set wijzigingen in
+`operations`.
+
+:::
 
 ## Retentie van snapshots en delta's
 
