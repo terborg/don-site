@@ -38,8 +38,11 @@ moet zijn gedefinieerd.
 
 De garantie van het patroon is
 [sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
-een vorm van sterke consistentie waarbij de lokale kopie — met een
-tijdsvertraging — gegarandeerd identiek is aan de collectie bij de bron.
+een consistentiemodel waarbij de lokale kopie gegarandeerd dezelfde volgorde van
+atomaire toestandsveranderingen doorloopt als de bron, waardoor — met een
+tijdsvertraging — een consistente toestand wordt bereikt. Dankzij deze
+sequentiële volgorde is de lokale kopie uiteindelijk identiek aan de collectie
+bij de bron.
 
 ## Het snapshots-en-delta's-patroon
 
@@ -110,8 +113,10 @@ daartussenin is de collectie consistent. Een `ETag` hoort bij een representatie
 en biedt die atomiciteitsgarantie niet per se.
 
 De provider kiest de concrete vorm van het state-id, bijvoorbeeld een oplopend
-transactienummer, tijdstempel, UUID of hash. De enige eis is dat een state-id
-uniek moet zijn binnen de collectie.
+transactienummer, tijdstempel, of een specifieke hash of UUID die intern aan een
+volgorde of index is gekoppeld. De belangrijkste eisen zijn dat een state-id
+uniek is binnen de collectie en dat de provider aan de hand hiervan de volgorde
+van wijzigingen kan bepalen.
 
 ## REST API's
 
@@ -136,15 +141,20 @@ collectie:
 
 ### Snapshots ophalen
 
-De provider publiceert een lijst van beschikbare snapshots, gesorteerd met het
-meest recente snapshot eerst. De consumer kan het eerste item in die lijst als
-startpunt kiezen:
+De provider publiceert een lijst van beschikbare snapshots, chronologisch
+gesorteerd (oudste eerst). De consumer kiest het laatste (meest recente) item in
+die lijst als startpunt:
 
 ```http
 GET /publicaties/snapshots
 → 200 OK
   {
     "items": [
+      {
+        "id": 10,
+        "href": "/publicaties/snapshots/10",
+        "total": 800
+      },
       {
         "id": 42,
         "href": "/publicaties/snapshots/42",
@@ -159,11 +169,11 @@ gemaakt, verandert het niet meer. Daardoor kan de provider die inhoud op
 verschillende manieren aanbieden, bijvoorbeeld met paginering, vaste chunks of
 bestanden. Snapshot-chunks zijn statische bestanden en kunnen potentieel groot
 zijn. Ze lenen zich daardoor voor distributie via een CDN, wat een API gateway
-kan ontlasten. Voor het patroon is vooral belangrijk dat alle delen samen
-dezelfde snapshot-toestand representeren. De provider hoort te garanderen dat
-vanaf elk aangeboden snapshot de aansluitende delta-keten beschikbaar is.
-Vervolgens haalt de consumer de inhoud op via de bijbehorende link. Die link kan
-relatief zijn binnen dezelfde API, maar ook absoluut.
+kan ontlasten. Voor het patroon is het van belang dat alle delen samen dezelfde
+snapshot-toestand representeren. De provider dient te garanderen dat vanaf elk
+aangeboden snapshot de aansluitende delta-keten beschikbaar is. Vervolgens haalt
+de consumer de inhoud op via de bijbehorende link. Die link kan relatief zijn
+binnen dezelfde API, maar ook absoluut.
 
 De provider houdt snapshots lang genoeg beschikbaar om ze volledig te
 downloaden; verloopt een snapshot toch tussentijds — kenbaar via `410 Gone` op
@@ -226,7 +236,7 @@ correct herstel na _out-of-order_ events lastiger wordt.
 
 #### Polling
 
-De consumer vraagt periodiek nieuwe delta's op via zijn state-id:
+De consumer vraagt periodiek nieuwe delta's op via het state-id:
 
 ```http
 GET /publicaties/deltas?after=42&limit=10
@@ -251,14 +261,14 @@ GET /publicaties/deltas?after=42&limit=10
 Dit gedraagt zich als cursor-based paginering, maar gebruikt expliciet
 `after=<state-id>` om de volgende stap in de delta-keten op te vragen. Via
 `limit` blijft de responsgrootte beheersbaar. De consumer verwerkt delta's in
-volgorde, zet zijn state-id naar het `id` van de laatste verwerkte delta en
-vraagt daarna de volgende pagina op met `after=<nieuw_state_id>`. Een lege
-items-lijst betekent dat de consumer actueel is en na het polling-interval
+volgorde, zet het eigen actuele state-id naar het `id` van de laatste verwerkte
+delta en vraagt daarna de volgende pagina op met `after=<nieuw_state_id>`. Een
+lege items-lijst betekent dat de consumer actueel is en na het polling-interval
 opnieuw kan opvragen.
 
-Ontvangt de consumer een delta waarvan `prev_id` niet aansluit bij de huidige
-state-id, dan is er een hiaat in de keten en moet hij opnieuw beginnen vanaf een
-snapshot.
+Ontvangt de consumer een delta waarvan `prev_id` niet aansluit bij het huidige
+state-id, dan is er sprake van een hiaat in de keten en dient de consumer
+opnieuw te beginnen vanaf een snapshot.
 
 Als het gevraagde state-id niet meer bekend is bij de provider, antwoordt die
 met `410 Gone`:
@@ -268,8 +278,8 @@ GET /publicaties/deltas?after=99
 → 410 Gone
 ```
 
-Ook dan moet de consumer opnieuw beginnen vanaf een snapshot. Voor polling is
-dat dus het algemene herstelpad: bij een gat in de keten of een onbekend
+Ook in dat geval dient de consumer opnieuw te beginnen vanaf een snapshot. Voor
+polling is dat het algemene herstelpad: bij een gat in de keten of een onbekend
 state-id opnieuw beginnen vanaf een snapshot.
 
 #### Streaming (SSE)
@@ -303,8 +313,8 @@ dat state-id inmiddels niet meer bekend is, antwoordt de provider alsnog met
 #### CloudEvents
 
 Delta's kunnen desgewenst in een [CloudEvents](https://cloudevents.io/)-envelop
-worden verpakt. Dat is prima, zolang de delta-semantiek behouden blijft: één
-event moet nog steeds één delta representeren, inclusief de atomaire set
+worden verpakt. Dit is goed mogelijk, mits de delta-semantiek behouden blijft:
+één event dient nog steeds één delta te representeren, inclusief de atomaire set
 wijzigingen in `operations`.
 
 ## Retentie van snapshots en delta's
@@ -322,15 +332,17 @@ De ontvangst van delta's kan vooruitlopen op het laden van een snapshot: een
 consumer kan al beginnen met het ontvangen van delta's terwijl er mogelijk nog
 geen snapshot is, of terwijl het snapshot nog wordt gedownload. Die delta's
 worden dan tijdelijk gebufferd, maar nog niet toegepast. Zodra het snapshot is
-geladen, verwijdert de consumer alles wat al in het snapshot zit en verwerkt hij
-alleen de delta's die op de snapshotpositie aansluiten. Dat kan de hersteltijd
-verkorten, maar is niet nodig als de provider de genoemde overlap garandeert.
+geladen, verwijdert de consumer alle gebufferde delta's tot en met de
+snapshotpositie, en verwerkt deze alleen de delta's die daarop aansluiten. Dat
+kan de hersteltijd verkorten, maar is niet nodig als de provider de genoemde
+overlap garandeert.
 
-De provider moet snapshots en delta's beschikbaar houden voor een
+De provider dient snapshots en delta's beschikbaar te houden voor een
 retentieperiode die groot genoeg is voor een consumer om ze te verwerken. Daarna
-mag de provider ze verwijderen. Bij polling en SSE-herverbinding ontvangt de
-consumer dan `410 Gone`. Daarmee weet hij dat het state-id is verlopen en dat
-opnieuw een snapshot moet worden opgehaald.
+geeft de provider de ruimte om deze te verwijderen. Bij polling en
+SSE-herverbinding ontvangt de consumer in dat geval `410 Gone`. Hieruit kan de
+consumer afleiden dat het state-id is verlopen en dat opnieuw een snapshot dient
+te worden opgehaald.
 
 ## Gerelateerde patronen
 
