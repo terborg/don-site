@@ -112,10 +112,10 @@ daartussenin is de collectie consistent. Een `ETag` hoort bij een representatie
 en biedt die atomiciteitsgarantie niet per se.
 
 De provider kiest de concrete vorm van het state-id, bijvoorbeeld een oplopend
-transactienummer, tijdstempel, of een specifieke hash of UUID die intern aan een
-volgorde of index is gekoppeld. De belangrijkste eisen zijn dat een state-id
-uniek is binnen de collectie en dat de provider aan de hand hiervan de volgorde
-van wijzigingen kan bepalen.
+transactienummer, een hash of een UUID. De enige eis is dat een state-id uniek
+is binnen de collectie. De volgorde van wijzigingen ligt vast in de
+`prev_id`-keten, niet in de state-id-waarden zelf — state-ids hoeven dus niet
+gesorteerd of oplopend te zijn.
 
 ## REST API's
 
@@ -311,10 +311,11 @@ provider alsnog met `410 Gone`.
 
 #### CloudEvents
 
-Delta's kunnen desgewenst in een [CloudEvents](https://cloudevents.io/)-envelop
-worden verpakt. Dit is goed mogelijk, mits de delta-semantiek behouden blijft:
-één event dient nog steeds één delta te representeren, inclusief de atomaire set
-wijzigingen in `operations`.
+Wanneer [CloudEvents](../standaarden/cloudevents) als envelop wordt gebruikt,
+kunnen delta's hierin worden verpakt. Dit is goed mogelijk mits de
+delta-semantiek behouden blijft: één event dient nog steeds één delta te
+representeren (inclusief het `id` en `prev_id`), waarbij de atomaire set
+wijzigingen (`operations`) in de `data`-payload van het event wordt geplaatst.
 
 ## Retentie van snapshots en delta's
 
