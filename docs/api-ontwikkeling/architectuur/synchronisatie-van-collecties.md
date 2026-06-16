@@ -32,9 +32,8 @@ synchronization_: het in één richting synchroniseren van de actuele toestand v
 een collectie. _Snapshots_ bieden een startpunt; _delta's_ houden die toestand
 daarna efficiënt bij. Het patroon is niet bedoeld voor bidirectionele
 synchronisatie, conflictresolutie of volledige historische replay op basis van
-events. Ook is het minder geschikt voor gefilterde of wisselende
-deelverzamelingen. Dat betekent dat de collectie of view vooraf door de provider
-moet zijn gedefinieerd.
+events. Ook is het minder geschikt voor deelverzamelingen die per consumer of
+per request met parameters worden samengesteld.
 
 De garantie van het patroon is
 [sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
