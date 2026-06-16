@@ -6,8 +6,6 @@ tags:
   - eda
 ---
 
-import SnapshotDeltaStreams from '@site/src/components/SnapshotDeltaStreams';
-
 # Synchronisatie van collecties
 
 In gedistribueerde systemen hebben consumers vaak een actuele, lokale en vooral
@@ -35,8 +33,8 @@ een collectie. _Snapshots_ bieden een startpunt; _delta's_ houden die toestand
 daarna efficiënt bij. Het patroon is niet bedoeld voor bidirectionele
 synchronisatie, conflictresolutie of volledige historische replay op basis van
 events. Ook is het minder geschikt voor gefilterde of wisselende
-deelverzamelingen. Dat betekent dat de collectie of view vooraf door de
-provider moet zijn gedefinieerd.
+deelverzamelingen. Dat betekent dat de collectie of view vooraf door de provider
+moet zijn gedefinieerd.
 
 De garantie van het patroon is
 [sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
@@ -55,7 +53,24 @@ artikel noemen we die positie een **state-id**. Een snapshot bevat de toestand
 tot en met zijn state-id; een delta beschrijft de stap van de vorige state-id
 naar een volgende state-id.
 
-<SnapshotDeltaStreams />
+| Snapshots | Delta's | Actie                  | State-id lokale kopie |
+| --------- | ------- | ---------------------- | --------------------- |
+| 10        |         | ouder snapshot         |                       |
+|           | 17      | al in nieuwer snapshot |                       |
+|           | 38      | al in nieuwer snapshot |                       |
+|           | 42      | al in 42               |                       |
+| 42        |         | **snapshot laden**     | **42**                |
+|           | 57      | **delta toepassen**    | **57**                |
+|           | 63      | **delta toepassen**    | **63**                |
+|           | 71      | **delta toepassen**    | **71**                |
+
+In bovenstaande tabel wordt `snapshot 42` als instappunt gebruikt:
+
+- Delta's tot en met `42` zijn al in `snapshot 42` opgenomen.
+- Na het laden van `snapshot 42` gaat de consumer verder met `delta 57`.
+- `Delta 57` moet aansluiten op state-id `42`.
+- Daarna past de consumer volgende delta's in volgorde toe.
+- De consumer bewaart steeds de laatst succesvol verwerkte `state-id`.
 
 ### Snapshots
 
