@@ -38,11 +38,10 @@ moet zijn gedefinieerd.
 
 De garantie van het patroon is
 [sequentiële consistentie](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency):
-een consistentiemodel waarbij de lokale kopie gegarandeerd dezelfde volgorde van
-atomaire toestandsveranderingen doorloopt als de bron, waardoor — met een
-tijdsvertraging — een consistente toestand wordt bereikt. Dankzij deze
-sequentiële volgorde is de lokale kopie uiteindelijk identiek aan de collectie
-bij de bron.
+een sterke garantie waarbij de lokale kopie gegarandeerd exact dezelfde volgorde
+van atomaire toestandsveranderingen doorloopt als de bron. Hierdoor is de lokale
+kopie — weliswaar met een tijdsvertraging — te allen tijde consistent met de
+(historische) toestand van de bron.
 
 ## Het snapshots-en-delta's-patroon
 
@@ -53,8 +52,8 @@ andere stroom zorgt ervoor dat de lokale kopie actueel blijft.
 
 Snapshots en delta's krijgen daarom een positie in dezelfde reeks. In dit
 artikel noemen we die positie een **state-id**. Een snapshot bevat de toestand
-tot en met zijn state-id; een delta beschrijft de stap van de vorige state-id
-naar een volgende state-id.
+tot en met het bijbehorende state-id; een delta beschrijft de stap van het
+vorige state-id naar een volgende state-id.
 
 | Snapshots | Delta's | Actie                  | State-id lokale kopie |
 | --------- | ------- | ---------------------- | --------------------- |
@@ -304,11 +303,11 @@ data: {"id": 63, "prev_id": 57, "operations": [{"type": "delete", "resource_id":
 
 De consumer valideert bij elke ontvangen delta dat `prev_id` overeenkomt met het
 huidige state-id. Een mismatch signaleert een hiaat en leidt tot hetzelfde
-herstelpad als bij polling. Een open SSE-verbinding kan na opzet geen `410 Gone`
-meer ontvangen; verloopt het state-id tijdens de sessie, dan sluit de provider
-de verbinding. Bij herverbinding stuurt de consumer opnieuw `Last-Event-ID`; als
-dat state-id inmiddels niet meer bekend is, antwoordt de provider alsnog met
-`410 Gone`.
+herstelpad als bij polling. Een open SSE-verbinding kan na de opzet geen
+`410 Gone` meer ontvangen; verloopt het state-id tijdens de sessie, dan sluit de
+provider de verbinding. Bij herverbinding stuurt de consumer opnieuw
+`Last-Event-ID`; als dat state-id inmiddels niet meer bekend is, antwoordt de
+provider alsnog met `410 Gone`.
 
 #### CloudEvents
 
