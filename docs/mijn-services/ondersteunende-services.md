@@ -23,6 +23,8 @@ Er zijn meerdere implementaties beschikbaar of in ontwikkeling:
 - [Open Klant](https://github.com/maykinmedia/open-klant) — open source
   implementatie van de klantinteractie-API's.
 
+### Verificatieservice
+
 ## Notificaties
 
 Een notificatieservice zorgt ervoor dat inwoners en ondernemers een melding
