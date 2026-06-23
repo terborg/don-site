@@ -48,9 +48,8 @@ maar doordat een inwoner of ondernemer grip ervaart:
 - weten wat de verwachte volgende stap is;
 - weten of er zelf nog een actie nodig of mogelijk is.
 
-In deze documentatie gebruiken we daarom liever het woord **grip** dan
-**regie**. Een inwoner bestuurt meestal niet het interne behandelproces, maar
-kan wel overzicht, begrip en handelingsperspectief krijgen.
+Een inwoner bestuurt meestal niet het interne behandelproces, maar krijgt wel
+overzicht, begrip en handelingsperspectief.
 
 ## Gebruikersbehoeften
 
