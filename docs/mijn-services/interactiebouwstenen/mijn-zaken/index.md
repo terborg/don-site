@@ -16,15 +16,11 @@ veranderen.
 
 :::
 
-MijnZaken geeft inwoners en ondernemers overzicht over hun lopende en afgeronde
-zaken met de overheid. De bouwsteen helpt hen begrijpen waar een aanvraag,
-melding, vergunning of ander dienstverleningsproces staat, wat er al is gebeurd
-en wat er nog van hen wordt verwacht.
-
-MijnZaken vertaalt interne procesinformatie naar begrijpelijke, betrouwbare en
-handelingsgerichte informatie voor inwoners en ondernemers. Een track & trace
-kan daar onderdeel van zijn, maar de bouwsteen is breder: het gaat om overzicht,
-context, verwachtingen en vervolgstappen.
+MijnZaken geeft inwoners en ondernemers inzicht in lopende en afgeronde
+dienstverleningsprocessen met de overheid. De bouwsteen vertaalt interne
+procesinformatie naar begrijpelijke, betrouwbare en handelingsgerichte
+informatie: waar staat het proces, wat is er al gebeurd en wat wordt er nog van
+de gebruiker verwacht?
 
 ## Doel
 
@@ -32,9 +28,6 @@ Het doel van MijnZaken is het wegnemen van onzekerheid. Een proces dat voor de
 gebruiker vaak voelt als een black box, wordt een proces dat te volgen en te
 begrijpen is.
 
-Een inwoner of ondernemer wil niet alleen een aanvraag kunnen indienen, maar ook
-weten wat er daarna gebeurt. MijnZaken maakt zichtbaar welke stappen zijn
-afgerond, wat nog loopt, welke informatie formeel is en of er actie nodig is.
 Daardoor hoeft iemand minder te bellen of te zoeken naar informatie en weet die
 persoon beter waar die aan toe is.
 
@@ -216,7 +209,7 @@ terugvinden.
 
 | Concept       | Betekenis voor MijnZaken                                                                                                            | Waarde voor de gebruiker                                                                          |
 | :------------ | :---------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
-| Zaak          | Het dienstverleningsproces dat de gebruiker wil volgen, bijvoorbeeld een aanvraag, melding of vergunning.                           | Dit is het ankerpunt voor status, documenten, besluiten, contactmomenten en acties.               |
+| Zaak          | Het ankerpunt voor de informatie over een dienstverleningsproces.                                                                   | Brengt status, documenten, besluiten, contactmomenten en acties bij elkaar.                       |
 | Zaaktype      | Het soort zaak of dienst, bijvoorbeeld parkeervergunning, bezwaar of melding openbare ruimte.                                       | Helpt de gebruiker zaken herkennen en onderscheiden, zeker wanneer meerdere zaken tegelijk lopen. |
 | Status        | De actuele stand van de zaak, vertaald naar begrijpelijke taal.                                                                     | Maakt duidelijk waar de zaak staat en wat de status betekent.                                     |
 | Resultaat     | De concrete uitkomst van een afgeronde zaak, bijvoorbeeld verleend, geweigerd, toegekend of afgewezen.                              | Laat zien hoe een zaak is geëindigd.                                                              |
