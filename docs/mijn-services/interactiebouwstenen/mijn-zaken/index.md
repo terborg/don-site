@@ -233,16 +233,14 @@ getoond.
 ## Relatie met andere bouwstenen
 
 MijnZaken staat niet op zichzelf. De bouwsteen componeert of verwijst naar
-informatie uit andere bouwstenen en domeinen.
+informatie uit andere MijnServices-bouwstenen.
 
-| Bouwsteen of domein | Relatie met MijnZaken                                                                                |
-| :------------------ | :--------------------------------------------------------------------------------------------------- |
-| MijnTaken           | Openstaande acties worden in de context van een zaak zichtbaar gemaakt.                              |
-| MijnActies          | Mogelijke acties kunnen vanuit een zaak worden gestart.                                              |
-| MijnBerichten       | Berichten kunnen aan een zaak gerelateerd zijn.                                                      |
-| MijnContactmomenten | Contactgeschiedenis wordt in de zaakcontext getoond.                                                 |
-| Documenten          | Ingediende stukken, brieven, besluiten en bewijsstukken worden gekoppeld aan de zaak.                |
-| Zaakgericht werken  | Zaakregistraties vormen een belangrijke bron voor status, documenten, besluiten en procesinformatie. |
+| Bouwsteen                                         | Relatie met MijnZaken                                                   |
+| :------------------------------------------------ | :---------------------------------------------------------------------- |
+| [MijnTaken](../mijn-taken/)                       | Openstaande acties worden in de context van een zaak zichtbaar gemaakt. |
+| [MijnActies](../mijn-acties/)                     | Mogelijke acties kunnen vanuit een zaak worden gestart.                 |
+| [MijnBerichten](../mijn-berichten/)               | Berichten kunnen aan een zaak gerelateerd zijn.                         |
+| [MijnContactmomenten](../mijn-contactmomenten/)   | Contactgeschiedenis wordt in de zaakcontext getoond.                    |
 
 ## Gebruik in kanalen
 
@@ -259,5 +257,3 @@ API's en bestaande standaarden.
   [architectuur en standaarden](../../architectuur-en-standaarden/).
 - De koppeling met zaakgericht werken wordt uitgewerkt in het
   [aansluitprofiel ZGW API's voor MijnZaken](../../aansluitprofielen/zgw-voor-mijnzaken).
-- [ZGW API's](https://vng-realisatie.github.io/gemma-zaken/standaard/) zijn een
-  belangrijke bron voor zaakgegevens, documenten, besluiten en statusinformatie.
