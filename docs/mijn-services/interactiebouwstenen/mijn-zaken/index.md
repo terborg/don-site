@@ -207,32 +207,37 @@ In deze situaties is het belangrijk dat de gebruiker niet met technische
 foutmeldingen wordt geconfronteerd, maar begrijpt wat er aan de hand is en wat
 eventueel de volgende stap is.
 
-## Informatieconcepten
+## Conceptueel informatiemodel
 
-Deze concepten beschrijven welke informatie rond een zaak betekenis krijgt voor
-de gebruiker.
+Het conceptueel informatiemodel beschrijft welke informatie rond een zaak
+betekenis krijgt voor inwoners en ondernemers. De begrippen hieronder vormen de
+kern van wat iemand in MijnZaken moet kunnen herkennen, begrijpen of
+terugvinden.
 
-| Concept       | Betekenis voor MijnZaken                                                                                                            |
-| :------------ | :---------------------------------------------------------------------------------------------------------------------------------- |
-| Zaak          | Het dienstverleningsproces dat de gebruiker wil volgen, bijvoorbeeld een aanvraag, melding of vergunning.                           |
-| Zaaktype      | Het soort zaak of dienst, zodat de gebruiker zaken kan herkennen en onderscheiden.                                                  |
-| Status        | De actuele stand van de zaak, vertaald naar begrijpelijke taal.                                                                     |
-| Resultaat     | De concrete uitkomst van een afgeronde zaak, bijvoorbeeld verleend, geweigerd, toegekend of afgewezen.                              |
-| Besluit       | Een formele beslissing die bij de zaak hoort.                                                                                       |
-| Document      | Een ingediend stuk, brief, bewijsstuk of ander informatieobject in de context van de zaak.                                          |
-| Contactmoment | Een werkelijk contact tussen gebruiker en overheid over de zaak.                                                                    |
-| Gesprek       | Een digitale dialoog over de zaak.                                                                                                  |
-| Taak          | Een handeling die door de gebruiker of organisatie moet worden uitgevoerd in de context van de zaak.                                |
-| Product       | Wat uit de zaak voortkomt of aan de gebruiker wordt geleverd, bijvoorbeeld een vergunning, voorziening of ander herkenbaar product. |
-| Verzoek       | De oorspronkelijke vraag of aanspraak waarmee de zaak is gestart.                                                                   |
-| Partij        | De inwoner, ondernemer, organisatie of andere betrokkene bij de zaak.                                                               |
-| Actor         | Degene of de organisatie-eenheid die de zaak behandelt of werkzaamheden uitvoert.                                                   |
-| Plan          | Een bredere samenhang van doelen, keuzes of activiteiten waar een zaak onderdeel van kan zijn.                                      |
+| Concept       | Betekenis voor MijnZaken                                                                                                            | Waarde voor de gebruiker                                                                          |
+| :------------ | :---------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| Zaak          | Het dienstverleningsproces dat de gebruiker wil volgen, bijvoorbeeld een aanvraag, melding of vergunning.                           | Dit is het ankerpunt voor status, documenten, besluiten, contactmomenten en acties.               |
+| Zaaktype      | Het soort zaak of dienst, bijvoorbeeld parkeervergunning, bezwaar of melding openbare ruimte.                                       | Helpt de gebruiker zaken herkennen en onderscheiden, zeker wanneer meerdere zaken tegelijk lopen. |
+| Status        | De actuele stand van de zaak, vertaald naar begrijpelijke taal.                                                                     | Maakt duidelijk waar de zaak staat en wat de status betekent.                                     |
+| Resultaat     | De concrete uitkomst van een afgeronde zaak, bijvoorbeeld verleend, geweigerd, toegekend of afgewezen.                              | Laat zien hoe een zaak is geëindigd.                                                              |
+| Besluit       | Een formele beslissing die bij de zaak hoort.                                                                                       | Maakt duidelijk welke formele uitkomst of rechtsgevolg bij de zaak hoort.                         |
+| Document      | Een ingediend stuk, brief, bewijsstuk of ander informatieobject in de context van de zaak.                                          | Helpt de gebruiker stukken terugvinden en begrijpen bij welke stap ze horen.                      |
+| Contactmoment | Een werkelijk contact tussen gebruiker en overheid over de zaak.                                                                    | Geeft overzicht over eerder contact en voorkomt dat informatie versnipperd raakt.                 |
+| Gesprek       | Een digitale dialoog over de zaak.                                                                                                  | Geeft ruimte voor vragen, toelichting of afstemming in de context van de zaak.                    |
+| Taak          | Een handeling die door de gebruiker of organisatie moet worden uitgevoerd in de context van de zaak.                                | Maakt zichtbaar of er nog iets moet gebeuren.                                                     |
+| Product       | Wat uit de zaak voortkomt of aan de gebruiker wordt geleverd, bijvoorbeeld een vergunning, voorziening of ander herkenbaar product. | Verbindt het proces met wat de gebruiker uiteindelijk ontvangt of gebruikt.                       |
+| Verzoek       | De oorspronkelijke vraag of aanspraak waarmee de zaak is gestart.                                                                   | Helpt verklaren waarom de zaak bestaat.                                                           |
+| Partij        | De inwoner, ondernemer, organisatie of andere betrokkene bij de zaak.                                                               | Maakt zichtbaar wie betrokken is, bijvoorbeeld als initiator, belanghebbende of behandelaar.      |
+
+Soms zijn ook achterliggende modelbegrippen relevant, zoals de organisatie of
+organisatie-eenheid die een zaak behandelt, of een bredere samenhang waar een
+zaak onderdeel van is. Voor de gebruiker telt vooral dat zichtbaar is wie de
+zaak behandelt, wie betrokken is en waar de zaak bij hoort.
 
 Voor overzichten kan een compacte zaakrepresentatie voldoende zijn. Voor een
 zaakdetail is juist een samengestelde zaakcontext nodig, waarin status,
-resultaat, documenten, contactmomenten, taken en relevante betrokkenen in
-samenhang worden getoond.
+resultaat, documenten, contactmomenten, taken en betrokkenen in samenhang worden
+getoond.
 
 ## Relatie met andere bouwstenen
 
