@@ -235,12 +235,12 @@ getoond.
 MijnZaken staat niet op zichzelf. De bouwsteen componeert of verwijst naar
 informatie uit andere MijnServices-bouwstenen.
 
-| Bouwsteen                                         | Relatie met MijnZaken                                                   |
-| :------------------------------------------------ | :---------------------------------------------------------------------- |
-| [MijnTaken](../mijn-taken/)                       | Openstaande acties worden in de context van een zaak zichtbaar gemaakt. |
-| [MijnActies](../mijn-acties/)                     | Mogelijke acties kunnen vanuit een zaak worden gestart.                 |
-| [MijnBerichten](../mijn-berichten/)               | Berichten kunnen aan een zaak gerelateerd zijn.                         |
-| [MijnContactmomenten](../mijn-contactmomenten/)   | Contactgeschiedenis wordt in de zaakcontext getoond.                    |
+| Bouwsteen                                       | Relatie met MijnZaken                                                   |
+| :---------------------------------------------- | :---------------------------------------------------------------------- |
+| [MijnTaken](../mijn-taken/)                     | Openstaande acties worden in de context van een zaak zichtbaar gemaakt. |
+| [MijnActies](../mijn-acties/)                   | Mogelijke acties kunnen vanuit een zaak worden gestart.                 |
+| [MijnBerichten](../mijn-berichten/)             | Berichten kunnen aan een zaak gerelateerd zijn.                         |
+| [MijnContactmomenten](../mijn-contactmomenten/) | Contactgeschiedenis wordt in de zaakcontext getoond.                    |
 
 ## Gebruik in kanalen
 
