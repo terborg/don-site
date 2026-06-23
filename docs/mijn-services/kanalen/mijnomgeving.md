@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 1
 ---
 
 # Kanaal: mijnomgeving
@@ -58,6 +58,62 @@ van het NL Design System werken diverse overheidsorganisaties sinds september
 templates voor mijnomgevingen en formulieren. Door gebruik te maken van gedeelde
 bouwblokken, gebruikersonderzoek en technische documentatie, wordt gewerkt aan
 een eenduidige en intuïtieve digitale ervaring voor inwoners en ondernemers.
+
+## MijnZaken in de mijnomgeving
+
+In de mijnomgeving krijgt de interactiebouwsteen
+[MijnZaken](../interactiebouwstenen/mijn-zaken/) een concrete presentatie. De
+uitwerking volgt de abstracte interactielogica van MijnZaken, maar maakt keuzes
+voor schermopbouw, navigatie, componenten en visuele prioritering.
+
+### Informatieopbouw
+
+De mijnomgeving gebruikt een vaste informatieopbouw om te voorkomen dat interne
+procescomplexiteit rechtstreeks op de gebruiker wordt overgedragen.
+
+Op overzichtsniveau helpt de mijnomgeving de gebruiker bepalen welke zaak
+relevant is. De informatie is compact en vergelijkbaar tussen zaken.
+
+Belangrijke elementen:
+
+- filteren op actualiteit, bijvoorbeeld lopend, afgerond of concept;
+- filteren op type dienstverlening, bijvoorbeeld vergunning, melding of
+  aanvraag;
+- sorteren op relevantie, laatste wijziging of datum;
+- signaleren dat actie nodig is;
+- navigeren naar de zaakcontext.
+
+Op detailniveau helpt de mijnomgeving de gebruiker de zaak begrijpen.
+
+Belangrijke elementen:
+
+- actuele status en betekenis in inwonertaal;
+- tijdlijn met mijlpalen en gebeurtenissen;
+- documenten en besluiten;
+- contactmomenten;
+- openstaande taken of acties;
+- verwachte volgende stap;
+- metadata over actualiteit en bron.
+
+### Schermen
+
+Elk scherm krijgt een eigen pagina met een korte omschrijving, een Figma-link of
+screenshot, en een interactietabel: per UI-element de interactie en de
+bijbehorende API-aanroep(en). Schermen worden geïdentificeerd met het patroon
+`SCR-<ONDERWERP>`.
+
+Startpunt voor deze uitwerking:
+[MijnZaken-overzicht in Figma](https://www.figma.com/proto/O3Wzm9ANIRHQTK98X0ljYs/VNG-mijn-services-prototype?node-id=9427-21196&starting-point-node-id=9448%3A758053).
+
+Voor MijnZaken zijn minimaal de volgende schermen relevant:
+
+| Scherm               | Doel                                                            |
+| :------------------- | :-------------------------------------------------------------- |
+| `SCR-ZAKENOVERZICHT` | Zaken vinden, herkennen en filteren.                            |
+| `SCR-ZAAKDETAIL`     | De actuele status en volledige zaakcontext begrijpen.           |
+| `SCR-ZAAKDOCUMENTEN` | Documenten, besluiten en bewijsstukken binnen de zaak bekijken. |
+| `SCR-ZAAKVERVOLG`    | Vervolgstappen, taken en acties in zaakcontext tonen.           |
+| `SCR-GEEN-ZAKEN`     | Uitleg geven wanneer er geen zaken beschikbaar zijn.            |
 
 ## Identity provider
 

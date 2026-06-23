@@ -69,9 +69,9 @@ overheidsorganisaties:
 ## Van route naar bouwstenen
 
 De generieke klantroute is de blauwdruk. De
-[bouwstenen van MijnServices](./bouwstenen/) vormen de gereedschapskist waarmee
-deze route concreet wordt ingevuld. Elke bouwsteen — van MijnZaken (status
-volgen) tot MijnTaken (acties uitvoeren) — is ontworpen om een specifiek
-onderdeel van de klantreis generiek af te handelen.
+[bouwstenen van MijnServices](./interactiebouwstenen/) vormen de
+gereedschapskist waarmee deze route concreet wordt ingevuld. Elke bouwsteen —
+van MijnZaken (status volgen) tot MijnTaken (acties uitvoeren) — is ontworpen om
+een specifiek onderdeel van de klantreis generiek af te handelen.
 
 <!-- downloadlink generieke klantroutes -->

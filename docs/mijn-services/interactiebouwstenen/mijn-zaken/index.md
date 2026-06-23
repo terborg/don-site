@@ -16,21 +16,27 @@ veranderen.
 
 :::
 
-MijnZaken biedt procestransparantie bij lopende en afgeronde
-dienstverleningsprocessen. De bouwsteen helpt inwoners en ondernemers begrijpen
-waar een zaak staat, wat er al is gebeurd, welke formele informatie daarbij
-hoort en welke vervolgstappen mogelijk of nodig zijn.
+MijnZaken geeft inwoners en ondernemers overzicht over hun lopende en afgeronde
+zaken met de overheid. De bouwsteen helpt hen begrijpen waar een aanvraag,
+melding, vergunning of ander dienstverleningsproces staat, wat er al is gebeurd
+en wat er nog van hen wordt verwacht.
 
-MijnZaken is daarmee geen digitale kopie van een backofficeproces en ook geen
-losse track & trace. Track & trace kan een verschijningsvorm zijn, maar de kern
-is breder: het vertalen van interne procesinformatie naar begrijpelijke,
-betrouwbare en handelingsgerichte interactie.
+MijnZaken vertaalt interne procesinformatie naar begrijpelijke, betrouwbare en
+handelingsgerichte informatie voor inwoners en ondernemers. Een track & trace
+kan daar onderdeel van zijn, maar de bouwsteen is breder: het gaat om overzicht,
+context, verwachtingen en vervolgstappen.
 
 ## Doel
 
-Het doel van MijnZaken is het wegnemen van onzekerheid bij inwoners en
-ondernemers over de status, voortgang en betekenis van een aanvraag, melding,
-procedure of ander dienstverleningsproces.
+Het doel van MijnZaken is het wegnemen van onzekerheid. Een proces dat voor de
+gebruiker vaak voelt als een black box, wordt een proces dat te volgen en te
+begrijpen is.
+
+Een inwoner of ondernemer wil niet alleen een aanvraag kunnen indienen, maar ook
+weten wat er daarna gebeurt. MijnZaken maakt zichtbaar welke stappen zijn
+afgerond, wat nog loopt, welke informatie formeel is en of er actie nodig is.
+Daardoor hoeft iemand minder te bellen of te zoeken naar informatie en weet die
+persoon beter waar die aan toe is.
 
 De waarde van MijnZaken ontstaat niet doordat een organisatie zaakdata toont,
 maar doordat een inwoner of ondernemer grip ervaart:
@@ -45,24 +51,6 @@ maar doordat een inwoner of ondernemer grip ervaart:
 In deze documentatie gebruiken we daarom liever het woord **grip** dan
 **regie**. Een inwoner bestuurt meestal niet het interne behandelproces, maar
 kan wel overzicht, begrip en handelingsperspectief krijgen.
-
-## Ontwerpbenadering
-
-MijnZaken is een bouwsteen voor service design: het standaardiseert de
-interactie rond procesinformatie in publieke dienstverlening. De bouwsteen staat
-op het snijvlak van communicatiewetenschap, cognitieve ergonomie en
-systeemtheorie.
-
-| Perspectief            | Ontwerpvraag                                                         | Betekenis voor MijnZaken                                                                                                   |
-| :--------------------- | :------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
-| Communicatiewetenschap | Hoe wordt procesinformatie begrijpelijk en betrouwbaar overgebracht? | Statussen, mijlpalen, besluiten en verwachtingen worden vertaald naar inwonertaal.                                         |
-| Cognitieve ergonomie   | Hoe verminderen we mentale belasting?                                | Zaakinformatie wordt geordend rond herkenning, actuele situatie, tijdlijn, documenten en vervolgstappen.                   |
-| Systeemtheorie         | Hoe tonen we samenhang zonder interne complexiteit te kopiëren?      | MijnZaken componeert informatie uit zaakregistraties, documenten, contactmomenten, taken en workflows tot één zaakcontext. |
-
-Deze benadering sluit aan op Service-Dominant Logic: waarde ontstaat in gebruik,
-niet in het beschikbaar stellen van data op zichzelf. MijnZaken levert dus niet
-alleen gegevens over een zaak, maar ondersteunt een interactie waarin inwoner en
-dienstverlener dezelfde situatie kunnen begrijpen.
 
 ## Gebruikersbehoeften
 
@@ -81,8 +69,8 @@ onnodig contact voorkomen.
 ## Scope
 
 MijnZaken beschrijft de interactie rond zaken en dienstverleningsprocessen. De
-bouwsteen standaardiseert niet hoe organisaties hun interne behandeling moeten
-inrichten.
+bouwsteen richt zich op de informatie die inwoners en ondernemers nodig hebben
+om een zaak te kunnen volgen en begrijpen.
 
 MijnZaken omvat:
 
@@ -96,66 +84,82 @@ MijnZaken omvat:
   beschikbaar zijn;
 - het verbinden van relevante acties vanuit de zaakcontext.
 
-MijnZaken omvat niet:
+Andere bouwstenen vullen MijnZaken aan:
 
-- het uitvoeren van taken zelf; dat hoort bij MijnTaken of MijnActies;
-- het beheren van berichtenconversaties; dat hoort bij MijnBerichten;
-- het vastleggen van contactmomenten zelf; dat hoort bij MijnContactmomenten;
-- het afdwingen van één intern zaakproces of één backofficesysteem;
-- het tonen van alle interne workflowdetails aan de inwoner.
+- taken en acties worden uitgewerkt in MijnTaken en MijnActies;
+- berichten en gesprekken worden uitgewerkt in MijnBerichten en MijnGesprekken;
+- contactmomenten worden uitgewerkt in MijnContactmomenten;
+- interne behandeling, workflow en bronregistratie blijven bij de organisatie
+  die de zaak behandelt.
 
 ## Capabilities
 
 De capabilities beschrijven wat MijnZaken als interactiebouwsteen mogelijk moet
-maken. Ze zijn geformuleerd vanuit gebruikerswaarde, niet vanuit endpoints of
-schermen.
+maken. Ze zijn geformuleerd vanuit de waarde die de gebruiker ervaart.
 
-| Capability                | Interactiewaarde                                                                            | Contract op hoofdlijnen                                                                                      |
-| :------------------------ | :------------------------------------------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------- |
-| Zaken vinden en herkennen | De gebruiker kan zaken terugvinden, onderscheiden en filteren op actualiteit en relevantie. | Lever per zaak minimaal een identifier, herkenbare omschrijving, zaaktype, statusgroep en laatste wijziging. |
-| Statusbetekenis tonen     | De gebruiker begrijpt wat de actuele status betekent.                                       | Vertaal interne statussen naar begrijpelijke statusgroepen, statusteksten en mijlpalen.                      |
-| Zaakcontext componeren    | De gebruiker ziet documenten, besluiten, contactmomenten en gebeurtenissen in samenhang.    | Stel een samenhangende ZaakContext samen uit onderliggende bronnen.                                          |
-| Vooruitblik geven         | De gebruiker weet wat de verwachte volgende stap of termijn is.                             | Lever een begrijpelijke verwachting, bijvoorbeeld een geplande stap, serviceniveau of uiterste beslisdatum.  |
-| Handelen vanuit context   | De gebruiker ziet welke actie mogelijk of nodig is.                                         | Verwijs vanuit de zaak naar relevante taken, acties of contactmogelijkheden.                                 |
-| Betrouwbaarheid duiden    | De gebruiker begrijpt hoe actueel, formeel en betrouwbaar informatie is.                    | Maak bron, actualiteit en aard van informatie zichtbaar waar dit relevant is.                                |
+| Capability                | Waarde voor de gebruiker                                                                    | Wat moet minimaal mogelijk zijn?                                                                                      |
+| :------------------------ | :------------------------------------------------------------------------------------------ | :-------------------------------------------------------------------------------------------------------------------- |
+| Zaken vinden en herkennen | De gebruiker kan zaken terugvinden, onderscheiden en filteren op actualiteit en relevantie. | Per zaak is duidelijk waar die over gaat, om wat voor zaak het gaat, wat de stand is en wanneer er iets is veranderd. |
+| Statusbetekenis tonen     | De gebruiker begrijpt wat de actuele status betekent.                                       | Interne statussen worden vertaald naar begrijpelijke statusgroepen, statusteksten en mijlpalen.                       |
+| Zaakcontext samenbrengen  | De gebruiker ziet documenten, besluiten, contactmomenten en gebeurtenissen in samenhang.    | Relevante informatie uit verschillende bronnen komt samen rond de zaak.                                               |
+| Vooruitblik geven         | De gebruiker weet wat de verwachte volgende stap of termijn is.                             | Waar mogelijk is zichtbaar wat de volgende stap is, wanneer iets verwacht wordt of wanneer een termijn afloopt.       |
+| Handelen vanuit context   | De gebruiker ziet welke actie mogelijk of nodig is.                                         | Taken, acties of contactmogelijkheden zijn herkenbaar verbonden aan de zaak waarop ze betrekking hebben.              |
+| Betrouwbaarheid duiden    | De gebruiker begrijpt hoe actueel, formeel en betrouwbaar informatie is.                    | Het is duidelijk waar informatie vandaan komt, hoe actueel die is en of die formeel of indicatief is.                 |
 
-## Use cases
+## Abstract interactiemodel
 
-Inwoners en ondernemers willen op elk moment weten waar hun zaken staan, wat er
-al is gebeurd en wat er nog van hen wordt verwacht. De use cases hieronder
-beschrijven hoe MijnZaken daarin voorziet.
+Het abstracte interactiemodel beschrijft welke interacties MijnZaken moet
+ondersteunen. Deze interacties kunnen terugkomen in meerdere kanalen, zoals een
+mijnomgeving, klantcontactcentrum of balie.
 
-### UC-01: Overzicht van zaken inzien
+MijnZaken ondersteunt drie hoofdinteracties:
 
-Een inwoner of ondernemer opent de MijnOmgeving en wil in één oogopslag zien
-welke zaken lopen, welke zijn afgerond en welke eventueel nog als concept
-bestaan.
+- lopende zaken overzien;
+- afgeronde zaken terugvinden;
+- de volledige context van een specifieke zaak begrijpen.
 
-Het overzicht helpt de gebruiker zaken herkennen en prioriteren. Daarom toont
-het overzicht niet alle beschikbare details, maar vooral informatie die nodig is
-om de juiste zaak te vinden:
+### Zaken overzien
+
+Een inwoner of ondernemer wil in één oogopslag zien welke zaken lopen, welke
+zijn afgerond en welke eventueel nog als concept bestaan.
+
+Deze interactie helpt de gebruiker zaken herkennen en prioriteren. Daarvoor is
+vooral informatie nodig die helpt om de juiste zaak te vinden:
 
 - herkenbare titel of omschrijving;
 - zaaktype of dienst;
 - actuele statusgroep, bijvoorbeeld open, afgerond of concept;
-- laatste wijziging of relevante datum;
+- relevante datum, bijvoorbeeld registratiedatum, laatste wijziging of datum
+  afgerond;
+- resultaat, wanneer een zaak is afgerond;
+- organisatienaam, wanneer de behandelende of leverende organisatie relevant is;
 - eventueel een signaal dat actie nodig is;
 - eventueel een eerstvolgende verwachte stap.
 
-### UC-02: Inhoud van een zaak inzien
+### Zaakcontext begrijpen
 
-Een inwoner of ondernemer kiest een zaak en wil de volledige context begrijpen:
-wat is de huidige status, welke stappen zijn doorlopen, welke documenten en
+Een inwoner of ondernemer wil de volledige context van een zaak begrijpen: wat
+is de huidige status, welke stappen zijn doorlopen, welke documenten en
 besluiten horen erbij en welke contactmomenten zijn relevant?
 
-De detailweergave componeert informatie uit meerdere bronnen tot één
-samenhangende zaakcontext. De gebruiker hoeft daardoor niet zelf te zoeken in
-losse brieven, berichten, documenten of contactgeschiedenis.
+MijnZaken componeert informatie uit meerdere bronnen tot één samenhangende
+zaakcontext. De gebruiker hoeft daardoor niet zelf te zoeken in losse brieven,
+berichten, documenten of contactgeschiedenis.
 
-### UC-03: Vervolgstappen vanuit een zaak begrijpen
+De zaakcontext kan bestaan uit:
 
-Een inwoner of ondernemer bekijkt een zaak en wil weten wat er nu gaat gebeuren
-of wat er zelf nog moet gebeuren.
+- zaakgegevens zoals zaaknummer, omschrijving, zaaktype, status en resultaat;
+- besluiten, documenten en bewijsstukken;
+- contactmomenten die bij de zaak horen;
+- gesprekken of berichten over de zaak;
+- taken of acties die bij de zaak horen;
+- betrokken partijen, zoals initiator, belanghebbende of behandelende
+  organisatie.
+
+### Vervolgstappen begrijpen
+
+Een inwoner of ondernemer wil weten wat er nu gaat gebeuren of wat er zelf nog
+moet gebeuren.
 
 MijnZaken toont daarom, waar beschikbaar:
 
@@ -165,7 +169,7 @@ MijnZaken toont daarom, waar beschikbaar:
 - acties die de gebruiker zelf kan starten;
 - contactmogelijkheden in de context van de zaak.
 
-### UC-04: Formele informatie terugvinden
+### Formele informatie terugvinden
 
 Een inwoner of ondernemer wil een ingediend document, ontvangen brief,
 vergunning, besluit of bewijsstuk terugvinden.
@@ -175,7 +179,7 @@ duidelijk welk document bij welke stap hoort, wat de status van het document is
 en of het om een formeel besluit, een ingediend stuk of ondersteunende
 informatie gaat.
 
-### UC-05: Vertrouwen krijgen in de informatie
+### Betrouwbaarheid duiden
 
 Een inwoner of ondernemer wil kunnen vertrouwen op de getoonde informatie.
 
@@ -185,40 +189,6 @@ MijnZaken maakt daarom, waar nodig, zichtbaar:
 - uit welke bron of organisatie informatie komt;
 - of een datum, status of vervolgstap formeel of indicatief is;
 - wat de gebruiker kan doen als informatie ontbreekt of onduidelijk is.
-
-## Functioneel ontwerp
-
-De functionele uitwerking van MijnZaken volgt een vaste informatieopbouw. Deze
-opbouw voorkomt dat interne procescomplexiteit rechtstreeks op de gebruiker
-wordt overgedragen.
-
-### Overzichtsniveau
-
-Het overzichtsniveau helpt de gebruiker bepalen welke zaak relevant is. De
-informatie is compact en vergelijkbaar tussen zaken.
-
-Belangrijke elementen:
-
-- filteren op actualiteit, bijvoorbeeld lopend, afgerond of concept;
-- filteren op type dienstverlening, bijvoorbeeld vergunning, melding of
-  aanvraag;
-- sorteren op relevantie, laatste wijziging of datum;
-- signaleren dat actie nodig is;
-- doorklikken naar de zaakcontext.
-
-### Detailniveau
-
-Het detailniveau helpt de gebruiker de zaak begrijpen.
-
-Belangrijke elementen:
-
-- actuele status en betekenis in inwonertaal;
-- tijdlijn met mijlpalen en gebeurtenissen;
-- documenten en besluiten;
-- contactmomenten;
-- openstaande taken of acties;
-- verwachte volgende stap;
-- metadata over actualiteit en bron.
 
 ### Uitzonderingssituaties
 
@@ -238,150 +208,61 @@ In deze situaties is het belangrijk dat de gebruiker niet met technische
 foutmeldingen wordt geconfronteerd, maar begrijpt wat er aan de hand is en wat
 eventueel de volgende stap is.
 
-## Schermen
+## Informatieconcepten
 
-Elk scherm krijgt een eigen pagina met een korte omschrijving, een Figma-link of
-screenshot, en een interactietabel: per UI-element de interactie en de
-bijbehorende API-aanroep(en). Schermen worden geïdentificeerd met het patroon
-`SCR-<ONDERWERP>`.
+Deze concepten beschrijven welke informatie rond een zaak betekenis krijgt voor
+de gebruiker.
 
-Startpunt voor deze uitwerking:
-[MijnZaken-overzicht in Figma](https://www.figma.com/proto/O3Wzm9ANIRHQTK98X0ljYs/VNG-mijn-services-prototype?node-id=9427-21196&starting-point-node-id=9448%3A758053).
+| Concept       | Betekenis voor MijnZaken                                                                                                            |
+| :------------ | :---------------------------------------------------------------------------------------------------------------------------------- |
+| Zaak          | Het dienstverleningsproces dat de gebruiker wil volgen, bijvoorbeeld een aanvraag, melding of vergunning.                           |
+| Zaaktype      | Het soort zaak of dienst, zodat de gebruiker zaken kan herkennen en onderscheiden.                                                  |
+| Status        | De actuele stand van de zaak, vertaald naar begrijpelijke taal.                                                                     |
+| Resultaat     | De concrete uitkomst van een afgeronde zaak, bijvoorbeeld verleend, geweigerd, toegekend of afgewezen.                              |
+| Besluit       | Een formele beslissing die bij de zaak hoort.                                                                                       |
+| Document      | Een ingediend stuk, brief, bewijsstuk of ander informatieobject in de context van de zaak.                                          |
+| Contactmoment | Een werkelijk contact tussen gebruiker en overheid over de zaak.                                                                    |
+| Gesprek       | Een digitale dialoog over de zaak.                                                                                                  |
+| Taak          | Een handeling die door de gebruiker of organisatie moet worden uitgevoerd in de context van de zaak.                                |
+| Product       | Wat uit de zaak voortkomt of aan de gebruiker wordt geleverd, bijvoorbeeld een vergunning, voorziening of ander herkenbaar product. |
+| Verzoek       | De oorspronkelijke vraag of aanspraak waarmee de zaak is gestart.                                                                   |
+| Partij        | De inwoner, ondernemer, organisatie of andere betrokkene bij de zaak.                                                               |
+| Actor         | Degene of de organisatie-eenheid die de zaak behandelt of werkzaamheden uitvoert.                                                   |
+| Plan          | Een bredere samenhang van doelen, keuzes of activiteiten waar een zaak onderdeel van kan zijn.                                      |
 
-Voor MijnZaken zijn minimaal de volgende schermen relevant:
+Voor overzichten kan een compacte zaakrepresentatie voldoende zijn. Voor een
+zaakdetail is juist een samengestelde zaakcontext nodig, waarin status,
+resultaat, documenten, contactmomenten, taken en relevante betrokkenen in
+samenhang worden getoond.
 
-| Scherm               | Doel                                                            |
-| :------------------- | :-------------------------------------------------------------- |
-| `SCR-ZAKENOVERZICHT` | Zaken vinden, herkennen en filteren.                            |
-| `SCR-ZAAKDETAIL`     | De actuele status en volledige zaakcontext begrijpen.           |
-| `SCR-ZAAKDOCUMENTEN` | Documenten, besluiten en bewijsstukken binnen de zaak bekijken. |
-| `SCR-ZAAKVERVOLG`    | Vervolgstappen, taken en acties in zaakcontext tonen.           |
-| `SCR-GEEN-ZAKEN`     | Uitleg geven wanneer er geen zaken beschikbaar zijn.            |
-
-## API's en interactieservices
-
-De API's van MijnZaken leveren niet alleen ruwe zaakdata, maar een
-interactiecontract voor procestransparantie. De API moet de UI in staat stellen
-om overzicht, context, vooruitblik en handelingsperspectief te tonen zonder dat
-de UI kennis nodig heeft van interne backofficeprocessen.
-
-### Conceptuele resources
-
-| Resource           | Betekenis                                                                                                      |
-| :----------------- | :------------------------------------------------------------------------------------------------------------- |
-| `ZaakSamenvatting` | Compacte representatie van een zaak voor overzichten en filters.                                               |
-| `ZaakContext`      | Samengestelde detailweergave van een zaak met status, tijdlijn, documenten, contactmomenten en vervolgstappen. |
-| `ZaakGebeurtenis`  | Gebeurtenis of mijlpaal in de tijdlijn van een zaak.                                                           |
-| `ZaakDocument`     | Document, besluit, bewijsstuk of formele communicatie in de context van de zaak.                               |
-| `ZaakVervolgstap`  | Verwachte mijlpaal, openstaande taak of mogelijke actie bij een zaak.                                          |
-
-### Data-minimalisatie
-
-Het overzicht levert alleen gegevens die nodig zijn om een zaak te herkennen en
-te kiezen. Details, documenten en contactgeschiedenis worden pas opgehaald
-wanneer de gebruiker een specifieke zaak opent.
-
-Voor een `ZaakSamenvatting` zijn op hoofdlijnen nodig:
-
-- unieke identifier;
-- herkenbare omschrijving;
-- zaaktype of dienst;
-- statusgroep, bijvoorbeeld `OPEN`, `CLOSED` of `DRAFT`;
-- statuslabel in inwonertaal;
-- relevante datum, bijvoorbeeld laatste wijziging of indieningsdatum;
-- indicatie of actie nodig is.
-
-Voor een `ZaakContext` zijn aanvullend nodig:
-
-- actuele status en betekenis;
-- tijdlijn met mijlpalen;
-- gekoppelde documenten en besluiten;
-- gekoppelde contactmomenten;
-- gekoppelde taken of acties;
-- verwachte volgende stap of doorlooptijd, wanneer beschikbaar;
-- bron- en actualiteitsinformatie.
-
-### Relatie met andere bouwstenen
+## Relatie met andere bouwstenen
 
 MijnZaken staat niet op zichzelf. De bouwsteen componeert of verwijst naar
 informatie uit andere bouwstenen en domeinen.
 
-| Bouwsteen of domein | Relatie met MijnZaken                                                                     |
-| :------------------ | :---------------------------------------------------------------------------------------- |
-| MijnTaken           | Openstaande acties worden in de context van een zaak zichtbaar gemaakt.                   |
-| MijnActies          | Mogelijke acties kunnen vanuit een zaak worden gestart.                                   |
-| MijnBerichten       | Berichten kunnen aan een zaak gerelateerd zijn.                                           |
-| MijnContactmomenten | Contactgeschiedenis wordt in de zaakcontext getoond.                                      |
-| Documenten          | Ingediende stukken, brieven, besluiten en bewijsstukken worden gekoppeld aan de zaak.     |
-| Zaakgericht werken  | Zaakregistraties vormen een belangrijke bron, maar bepalen niet één-op-één de interactie. |
+| Bouwsteen of domein | Relatie met MijnZaken                                                                                |
+| :------------------ | :--------------------------------------------------------------------------------------------------- |
+| MijnTaken           | Openstaande acties worden in de context van een zaak zichtbaar gemaakt.                              |
+| MijnActies          | Mogelijke acties kunnen vanuit een zaak worden gestart.                                              |
+| MijnBerichten       | Berichten kunnen aan een zaak gerelateerd zijn.                                                      |
+| MijnContactmomenten | Contactgeschiedenis wordt in de zaakcontext getoond.                                                 |
+| Documenten          | Ingediende stukken, brieven, besluiten en bewijsstukken worden gekoppeld aan de zaak.                |
+| Zaakgericht werken  | Zaakregistraties vormen een belangrijke bron voor status, documenten, besluiten en procesinformatie. |
 
-### API's voor zaakgericht werken
+## Gebruik in kanalen
 
-[ZGW API's](https://vng-realisatie.github.io/gemma-zaken/standaard/) zijn een
-belangrijke bron voor zaakgegevens. MijnZaken gebruikt deze broninformatie niet
-als rechtstreeks schermmodel, maar vertaalt deze naar interactie-informatie:
+De concrete presentatie van MijnZaken hoort bij de kanalen waarin de bouwsteen
+wordt gebruikt. De eerste uitwerking staat bij
+[kanaal: mijnomgeving](../../kanalen/mijnomgeving).
 
-- interne statussen worden begrijpelijke statusgroepen en statusteksten;
-- zaakobjecten worden herkenbare zaakrepresentaties;
-- documenten en besluiten worden in context geplaatst;
-- workflowinformatie wordt vertaald naar mijlpalen en verwachtingen.
+## Aansluiten op bronnen en standaarden
 
-## Architectuur en standaarden
+Technische uitwerkingen beschrijven hoe MijnZaken wordt aangesloten op bronnen,
+API's en bestaande standaarden.
 
-MijnZaken past binnen de algemene
-[architectuur en standaarden](../../architectuur-en-standaarden/) van
-MijnServices. De belangrijkste architectuurkeuze is dat we interactie
-modelleren, niet alleen registratie.
-
-```mermaid
-flowchart LR
-    UI["UI / UX"] --> IS["Interactie-services API"]
-    IS --> MZ["MijnZaken"]
-    IS --> MT["MijnTaken"]
-    IS --> MB["MijnBerichten"]
-    IS --> MC["MijnContactmomenten"]
-    MZ --> ZGW["Zaakgericht werken"]
-    MZ --> DOC["Documenten"]
-    MZ --> WF["Workflow / planning"]
-```
-
-De UI toont de interactie. De interactieservices leveren de samenhangende
-gebruikerscontext. Bouwstenen zoals MijnZaken, MijnTaken, MijnBerichten en
-MijnContactmomenten standaardiseren elk een herkenbaar interactiepatroon binnen
-die context.
-
-Voor MijnZaken betekent dit:
-
-- de UI hoeft geen interne proceslogica te kennen;
-- de API levert informatie in termen van gebruikersinteractie;
-- broninformatie blijft herleidbaar;
-- statusinformatie wordt losgekoppeld van interne workflowcodes;
-- de bouwsteen kan kanaalonafhankelijk worden toegepast.
-
-## Ontwerpprincipes
-
-De volgende ontwerpprincipes helpen om MijnZaken consistent uit te werken.
-
-1. **Begin bij onzekerheid**  
-   Toon eerst wat de gebruiker nodig heeft om de situatie te begrijpen.
-
-2. **Gebruik inwonertaal**  
-   Vertaal interne statussen en processtappen naar begrijpelijke taal.
-
-3. **Maak onderscheid tussen feit, verwachting en actie**  
-   Een besluit, een verwachte datum en een openstaande taak zijn verschillende
-   soorten informatie.
-
-4. **Toon samenhang, geen systeemgrenzen**  
-   Groepeer informatie rond de zaak, niet rond de bronapplicatie.
-
-5. **Minimaliseer informatie in het overzicht**  
-   Toon in het overzicht alleen wat nodig is om de juiste zaak te herkennen.
-
-6. **Geef handelingsperspectief**  
-   Maak duidelijk wat de gebruiker kan doen, moet doen of juist niet hoeft te
-   doen.
-
-7. **Duid betrouwbaarheid**  
-   Maak zichtbaar wanneer informatie actueel, formeel, indicatief of afkomstig
-   uit een specifieke bron is.
+- Algemene afspraken staan bij
+  [architectuur en standaarden](../../architectuur-en-standaarden/).
+- De koppeling met zaakgericht werken wordt uitgewerkt in het
+  [aansluitprofiel ZGW API's voor MijnZaken](../../aansluitprofielen/zgw-voor-mijnzaken).
+- [ZGW API's](https://vng-realisatie.github.io/gemma-zaken/standaard/) zijn een
+  belangrijke bron voor zaakgegevens, documenten, besluiten en statusinformatie.
