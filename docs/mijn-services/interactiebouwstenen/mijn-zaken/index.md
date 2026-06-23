@@ -200,12 +200,10 @@ In deze situaties is het belangrijk dat de gebruiker niet met technische
 foutmeldingen wordt geconfronteerd, maar begrijpt wat er aan de hand is en wat
 eventueel de volgende stap is.
 
-## Conceptueel informatiemodel
+## Begrippenlijst
 
-Het conceptueel informatiemodel beschrijft welke informatie rond een zaak
-betekenis krijgt voor inwoners en ondernemers. De begrippen hieronder vormen de
-kern van wat iemand in MijnZaken moet kunnen herkennen, begrijpen of
-terugvinden.
+MijnZaken gebruikt deze begrippen om informatie rond een dienstverleningsproces
+te ordenen en in samenhang te tonen.
 
 | Concept       | Betekenis voor MijnZaken                                                                                                            | Waarde voor de gebruiker                                                                          |
 | :------------ | :---------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------ |
