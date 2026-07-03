@@ -1,5 +1,4 @@
 ---
-title: Aansluitprofiel ZGW API's voor MijnZaken
 sidebar_label: ZGW API's
 ---
 
@@ -11,13 +10,19 @@ functionele informatiemodel van MijnZaken.
 
 :::
 
+# Aansluitprofiel ZGW API's
+
+Dit aansluitprofiel beschrijft hoe de ZGW API's als bron worden gebruikt voor de
+InteractieServices API. De uitvoerbare workflows worden vastgelegd in Arazzo:
+per operationId van de InteractieServices API beschrijft een workflow welke ZGW
+API-operaties nodig zijn om de response-DTO samen te stellen.
+
 ## Positionering
 
 De doelen en scope van MijnZaken worden beschreven bij de
-[interactiebouwsteen MijnZaken](../interactiebouwstenen/mijn-zaken/). Deze
-schets werkt alleen uit hoe informatie uit de ZGW API's kan worden
-geïnterpreteerd en vertaald naar begrippen van MijnZaken, zoals zaak, status,
-resultaat, document en besluit.
+[bouwsteen MijnZaken](../bouwstenen/mijn-zaken/). Deze schets werkt alleen uit
+hoe informatie uit de ZGW API's kan worden geïnterpreteerd en vertaald naar
+begrippen van MijnZaken, zoals zaak, status, resultaat, document en besluit.
 
 Het aansluitprofiel beschrijft dus wat informatie uit de ZGW API's betekent
 binnen MijnServices.

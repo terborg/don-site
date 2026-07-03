@@ -1,9 +1,9 @@
 ---
 sidebar_position: 1
-sidebar_label: Mijnomgeving
+sidebar_label: MijnOmgeving
 ---
 
-# Kanaal: mijnomgeving
+# Kanaal: MijnOmgeving
 
 Een mijnomgeving is één van de kanalen waarbinnen MijnServices worden aangeboden
 — naast kanalen als het KCC en de balie. Het is een ingelogde digitale omgeving
@@ -63,9 +63,9 @@ een eenduidige en intuïtieve digitale ervaring voor inwoners en ondernemers.
 ## MijnZaken in de mijnomgeving
 
 In de mijnomgeving krijgt de interactiebouwsteen
-[MijnZaken](../interactiebouwstenen/mijn-zaken/) een concrete presentatie. De
-uitwerking volgt de abstracte interactielogica van MijnZaken, maar maakt keuzes
-voor schermopbouw, navigatie, componenten en visuele prioritering.
+[MijnZaken](../bouwstenen/mijn-zaken/) een concrete presentatie. De uitwerking
+volgt de abstracte interactielogica van MijnZaken, maar maakt keuzes voor
+schermopbouw, navigatie, componenten en visuele prioritering.
 
 ### Informatieopbouw
 

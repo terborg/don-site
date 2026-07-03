@@ -1,5 +1,6 @@
 ---
 sidebar_position: 1
+sidebar_label: Interactiepatronen
 ---
 
 # Interactiepatronen in klantreizen
@@ -53,6 +54,23 @@ Of het nu gaat om een verhuizing, het starten van een bedrijf of het verlengen
 van een rijbewijs: deze stappen keren in essentie steeds terug. De specifieke
 invulling verschilt per dienst, maar het pad is herkenbaar.
 
+## Zekerheid en bevestiging
+
+In vrijwel elke klantreis heeft de gebruiker behoefte aan zekerheid: is mijn
+aanvraag ontvangen, is mijn betaling gelukt, is mijn bericht aangekomen en wat
+gebeurt er daarna? Bevestiging is daarom een terugkerend interactiepatroon.
+
+Een goede bevestiging maakt direct duidelijk:
+
+- welke handeling is gelukt of ontvangen;
+- wat de gebruiker eventueel als bewijs of naslag kan bewaren;
+- wat de overheid daarna doet;
+- binnen welke termijn de gebruiker een reactie of vervolg mag verwachten.
+
+Bevestiging kan in het kanaal zelf worden getoond en, wanneer dat passend is,
+ook via een ander kanaal worden herhaald. De inhoud moet aansluiten op de
+handeling en mag niet voelen als een losse systeemmelding.
+
 ## Wat dit oplevert
 
 Door de generieke klantroute als gemeenschappelijk model te hanteren, kunnen
@@ -69,9 +87,9 @@ overheidsorganisaties:
 ## Van route naar bouwstenen
 
 De generieke klantroute is de blauwdruk. De
-[bouwstenen van MijnServices](./interactiebouwstenen/) vormen de
-gereedschapskist waarmee deze route concreet wordt ingevuld. Elke bouwsteen —
-van MijnZaken (status volgen) tot MijnTaken (acties uitvoeren) — is ontworpen om
-een specifiek onderdeel van de klantreis generiek af te handelen.
+[bouwstenen van MijnServices](../bouwstenen/) vormen de gereedschapskist waarmee
+deze route concreet wordt ingevuld. Elke bouwsteen — van MijnZaken (status
+volgen) tot MijnTaken (acties uitvoeren) — is ontworpen om een specifiek
+onderdeel van de klantreis generiek af te handelen.
 
 <!-- downloadlink generieke klantroutes -->

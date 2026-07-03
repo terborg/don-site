@@ -78,7 +78,7 @@ MijnZaken omvat:
 
 Andere bouwstenen vullen MijnZaken aan:
 
-- taken en acties worden uitgewerkt in MijnTaken en MijnActies;
+- taken en acties worden uitgewerkt in MijnTaken;
 - berichten en gesprekken worden uitgewerkt in MijnBerichten en MijnGesprekken;
 - contactmomenten worden uitgewerkt in MijnContactmomenten;
 - interne behandeling, workflow en bronregistratie blijven bij de organisatie
@@ -238,7 +238,6 @@ informatie uit andere MijnServices-bouwstenen.
 | Bouwsteen           | Relatie met MijnZaken                                                   |
 | :------------------ | :---------------------------------------------------------------------- |
 | MijnTaken           | Openstaande acties worden in de context van een zaak zichtbaar gemaakt. |
-| MijnActies          | Mogelijke acties kunnen vanuit een zaak worden gestart.                 |
 | MijnBerichten       | Berichten kunnen aan een zaak gerelateerd zijn.                         |
 | MijnContactmomenten | Contactgeschiedenis wordt in de zaakcontext getoond.                    |
 
@@ -256,4 +255,4 @@ API's en bestaande standaarden.
 - Algemene afspraken staan bij
   [architectuur en standaarden](../../architectuur-en-standaarden/).
 - De koppeling met zaakgericht werken wordt uitgewerkt in het
-  [aansluitprofiel ZGW API's voor MijnZaken](../../aansluitprofielen/zgw-voor-mijnzaken).
+  [aansluitprofiel ZGW API's](../../aansluitprofielen/zgw).
