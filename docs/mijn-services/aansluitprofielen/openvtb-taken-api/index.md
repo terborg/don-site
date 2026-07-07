@@ -75,22 +75,27 @@ de volgende tooling voor de hand:
 - valideren dat elke `x-mijnservices-targetOperationId` bestaat in de
   InteractieServices API;
 - valideren dat elke gebruikte `operationId` bestaat in de OpenVTB Taken API;
-- genereren van een mappingoverzicht per flow, source operation en doeloperatie;
+- genereren van een mappingoverzicht uit `arazzo.yaml` en `mapping.yaml` per
+  flow, source operation en doeloperatie;
 - tonen welke velden een transformatie nodig hebben, bijvoorbeeld van `date`
   naar `date-time`;
 - later bundelen van meerdere Arazzo-bestanden tot een overkoepelend
   aansluitprofielenoverzicht.
 
-Een generator of validator kan starten bij `v0.1/arazzo.yaml` en de
-`sourceDescriptions` volgen naar het functioneel model, de InteractieServices
-API en de bron-API.
+Een generator of validator gebruikt `v0.1/arazzo.yaml` als workflowbasis en
+verrijkt het mappingoverzicht met `v0.1/mapping.yaml`. Vanuit Arazzo volgt de
+generator de `sourceDescriptions` naar het functioneel model, de
+InteractieServices API en de bron-API.
 
 ## Mappingoverzicht
 
-Het mappingoverzicht laat per workflow zien hoe bronvelden uit de OpenVTB Taken
-API landen in de response van de InteractieServices API. Step outputs halen de
-bronwaarden op; workflow outputs gebruiken dot-notatie voor doelvelden, zoals
-`taak.titel.nl` en `taak.context.urn`.
+Het mappingoverzicht wordt gegenereerd uit Arazzo en `mapping.yaml`. Arazzo
+levert per workflow de bronoperaties, step outputs en doelvelden. `mapping.yaml`
+voegt daar de JSONata-regels aan toe voor velden die waardemapping of
+formaattransformatie nodig hebben.
+
+Step outputs halen de bronwaarden op; workflow outputs gebruiken dot-notatie
+voor doelvelden, zoals `taak.titel.nl` en `taak.context.urn`.
 
 Voorbeeld: bronveld `status` wordt step output `taakStatus` en vult doelveld
 `taak.status`. Omdat OpenVTB fijnmaziger statuswaarden gebruikt, staat de
