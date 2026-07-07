@@ -24,11 +24,13 @@ Voor versie `v0.1` zijn de artefacten:
 - [`v0.1/openapi.yaml`](./v0.1/openapi.yaml): snapshot van de bron-API.
 - [`v0.1/arazzo.yaml`](./v0.1/arazzo.yaml): workflowmapping tussen de bron-API
   en de InteractieServices API.
+- [`v0.1/mapping.yaml`](./v0.1/mapping.yaml): JSONata-profielregels voor
+  waardemapping en formaattransformaties.
 
-De Arazzo-specificatie is de single source of truth voor het aansluitprofiel.
-Zij beschrijft welke bronoperaties nodig zijn om een InteractieServices-operatie
-te vullen en legt daarbij expliciet vast welke functionele flow wordt
-ondersteund.
+Arazzo is de single source of truth voor de workflow: welke bronoperaties nodig
+zijn en welke functionele flow wordt ondersteund. `mapping.yaml` beschrijft de
+JSONata-regels die buiten Arazzo vallen, zoals enumwaardemapping en
+formaattransformaties.
 
 DTO's worden niet in het aansluitprofiel opnieuw gedefinieerd. De doelstructuur
 staat in de InteractieServices API; de bronstructuur staat in de OpenVTB Taken
@@ -46,6 +48,23 @@ De specifieke endpoints voor betaal-, formulier- en urltaken zijn daarmee geen
 losse alternatieve workflows voor MijnServices, maar bron-specifieke varianten
 die via de generieke response worden onderscheiden.
 
+`isGerelateerdAan` bevat een lijst met contextrelaties. Elke relatie heeft een
+`urn` naar bijvoorbeeld een zaak of product. In de mapping wordt daarom
+`isGerelateerdAan[0].urn` gebruikt voor `taak.context.urn`.
+
+## Cross-API stappen
+
+Niet elke handeling die bij een taak hoort, hoeft door de OpenVTB Taken API zelf
+te worden uitgevoerd. Als een taak bijvoorbeeld vraagt om een document te
+uploaden of te registreren, kan de uitvoerende call bij een andere bron-API
+liggen, zoals de ZGW Documenten API.
+
+In dat geval blijft de OpenVTB Taken API de bron voor de taak en de context,
+maar beschrijft Arazzo een workflow met meerdere `sourceDescriptions`:
+bijvoorbeeld OpenVTB Taken API voor `externetakenRetrieve` en ZGW Documenten API
+voor de documentoperatie. De workflow maakt dan expliciet welke gegevens uit de
+taak nodig zijn om de vervolgstap bij de andere API uit te voeren.
+
 ## Tooling
 
 De eerste workflows worden handmatig uitgewerkt in Arazzo, zodat de
@@ -57,6 +76,8 @@ de volgende tooling voor de hand:
   InteractieServices API;
 - valideren dat elke gebruikte `operationId` bestaat in de OpenVTB Taken API;
 - genereren van een mappingoverzicht per flow, source operation en doeloperatie;
+- tonen welke velden een transformatie nodig hebben, bijvoorbeeld van `date`
+  naar `date-time`;
 - later bundelen van meerdere Arazzo-bestanden tot een overkoepelend
   aansluitprofielenoverzicht.
 
@@ -66,15 +87,26 @@ API en de bron-API.
 
 ## Mappingoverzicht
 
-Het mappingoverzicht moet per workflow laten zien hoe bronvelden uit de OpenVTB
-Taken API landen in de response van de InteractieServices API. Voor
-`mijnTaken.taakRaadplegen` betekent dit bijvoorbeeld dat `outputs.result` wordt
+Het mappingoverzicht laat per workflow zien hoe bronvelden uit de OpenVTB Taken
+API landen in de response van de InteractieServices API. Step outputs halen de
+bronwaarden op; workflow outputs gebruiken dot-notatie voor doelvelden, zoals
+`taak.titel.nl` en `taak.context.urn`.
+
+Voorbeeld: bronveld `status` wordt step output `taakStatus` en vult doelveld
+`taak.status`. Omdat OpenVTB fijnmaziger statuswaarden gebruikt, staat de
+waardemapping in `v0.1/mapping.yaml`.
+
+Voor `mijnTaken.taakRaadplegen` betekent dit dat alle `taak.*` outputs worden
 vergeleken met het schema van `interactieservicesApi.retrieveTaak`.
 
 Naast de expliciete mapping moet het overzicht ook verschillen zichtbaar maken:
 
 - **Gemapte attributen:** bronattributen die via Arazzo worden gebruikt om een
   veld in de InteractieServices API te vullen.
+- **Transformaties:** mappings waarbij type, formaat of betekenis niet
+  een-op-een overeenkomt. Voor `deadline` levert OpenVTB bijvoorbeeld
+  `einddatumHandelingsTermijn` als `date`, terwijl de InteractieServices API een
+  `date-time` verwacht.
 - **Ongebruikte bronattributen:** attributen die wel terugkomen uit de OpenVTB
   Taken API, maar niet in de InteractieServices API terechtkomen.
 - **Niet-gevulde doelattributen:** attributen die de InteractieServices API wel
