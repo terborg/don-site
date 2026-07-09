@@ -12,6 +12,9 @@ module.exports = function openApiDocsWebpackAlias() {
               "docusaurus-plugin-openapi-docs/lib/openapi/createSchemaExample",
             ),
           },
+          fallback: {
+            path: require.resolve("path-browserify"),
+          },
         },
       };
     },
