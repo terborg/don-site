@@ -2,6 +2,7 @@
 // import docusaurusTheme from "./src/utils/prismLight";
 import type { Config } from "@docusaurus/types";
 import type * as Preset from "@docusaurus/preset-classic";
+import type * as OpenApiPlugin from "docusaurus-plugin-openapi-docs";
 import remarkDirectiveSugar from "remark-directive-sugar";
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -28,7 +29,7 @@ type PiwikProClientConfig = {
   accountAddress: string;
 };
 
-const config: Config & { customFields: Config["customFields"] & { piwikPro: PiwikProClientConfig }} = {
+const config: Config & { customFields: Config["customFields"] & { piwikPro: PiwikProClientConfig } } = {
   title: "developer.overheid.nl",
   customFields: {
     siteName: "developer.overheid.nl",
@@ -98,10 +99,34 @@ const config: Config & { customFields: Config["customFields"] & { piwikPro: Piwi
       onBrokenMarkdownImages: "throw",
     },
   },
-  themes: ["@docusaurus/theme-mermaid", "docusaurus-theme-search-typesense"],
+  themes: [
+    "@docusaurus/theme-mermaid",
+    "docusaurus-theme-openapi-docs",
+    "docusaurus-theme-search-typesense",
+  ],
   plugins: [
     "./plugins/content-type-index.js",
     "./plugins/plugin-piwik-pro.ts",
+    "./plugins/openapi-docs-webpack-alias.js",
+    "docusaurus-plugin-sass",
+    [
+      "docusaurus-plugin-openapi-docs",
+      {
+        id: "mijn-services-openapi",
+        docsPluginId: "classic",
+        config: {
+          interactieservicesApi: {
+            specPath: "docs/mijn-services/specificaties/interactieservices-api/v0.1/openapi.yaml",
+            outputDir: "docs/mijn-services/specificaties/interactieservices-api/referentie",
+            showSchemas: true,
+            sidebarOptions: {
+              groupPathsBy: "tag",
+              categoryLinkSource: "tag",
+            },
+          } satisfies OpenApiPlugin.Options,
+        },
+      },
+    ],
     [
       "@docusaurus/plugin-content-docs",
       {
@@ -135,6 +160,7 @@ const config: Config & { customFields: Config["customFields"] & { piwikPro: Piwi
           path: "docs",
           routeBasePath: "kennisbank",
           sidebarPath: "./sidebars.ts",
+          docItemComponent: "@theme/ApiItem",
           sidebarItemsGenerator: async function ({
             defaultSidebarItemsGenerator,
             ...args
@@ -184,6 +210,11 @@ const config: Config & { customFields: Config["customFields"] & { piwikPro: Piwi
   ],
 
   themeConfig: {
+    api: {
+      schemaExpansion: {
+        default: 1,
+      },
+    },
     docs: {
       sidebar: {
         autoCollapseCategories: true,

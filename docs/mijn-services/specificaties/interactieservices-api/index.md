@@ -22,6 +22,7 @@ voor beheer door de standaardisatiegroep.
 Voor versie `v0.1` is het publicatiebestand:
 
 - [`v0.1/openapi.yaml`](./v0.1/openapi.yaml)
+- [Gegenereerde API-referentie](./referentie/mijntaken-api)
 
 ## Aansluitprofielen
 
