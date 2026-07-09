@@ -13,6 +13,16 @@ sourceDescriptions:
   - name: openvtbTakenApi
     url: ./openapi.yaml
     type: openapi
+components:
+  schemas:
+    OpenvtbTaakStatusNaarMijnTakenStatus:
+      type: object
+      properties:
+        open: open
+        uitgevoerd: afgerond
+        verwerkt: afgerond
+        afgebroken: geannuleerd
+        niet_uitgevoerd: geannuleerd
 workflows:
   - workflowId: openvtbTakenApi.zoekContextTaken
     summary: Vul taken in zoekContext vanuit OpenVTB Taken API.
@@ -74,7 +84,10 @@ workflows:
       taak.uuid: $steps.retrieveTaak.outputs.uuid
       taak.titel.nl: $steps.retrieveTaak.outputs.titel
       taak.toelichting.nl: $steps.retrieveTaak.outputs.toelichting
-      taak.status: $steps.retrieveTaak.outputs.taakStatus
+      taak.status:
+        context: $components.schemas.OpenvtbTaakStatusNaarMijnTakenStatus
+        selector: "$.['{$steps.retrieveTaak.outputs.taakStatus}']"
+        type: jsonpath
       taak.deadline: $steps.retrieveTaak.outputs.einddatumHandelingsTermijn
       taak.context.urn: $steps.retrieveTaak.outputs.contextUrn
       taak.uitvoering.type: $steps.retrieveTaak.outputs.handelingsPerspectief

@@ -1,6 +1,5 @@
 ---
 sidebar_position: 8
-draft: true
 description:
   Profielcontext, contactgegevens en voorkeuren voor inwoners en ondernemers.
 sidebar_custom_props:

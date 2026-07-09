@@ -1,6 +1,5 @@
 ---
 sidebar_position: 4
-draft: true
 description: Informatieve berichten en meldingen voor inwoners en ondernemers.
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-berichten.svg
