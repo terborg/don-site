@@ -96,16 +96,17 @@ Belangrijke elementen:
 - verwachte volgende stap;
 - metadata over actualiteit en bron.
 
-### Flows en schermprofielen
+### Functioneel ontwerp en schermprofielen
 
-User-flows en functionele ontwerpen beschrijven eerst het verloop binnen de
-mijnomgeving: welke stappen doorloopt de gebruiker, welke states zijn relevant
-en welke keuzes zijn specifiek voor dit kanaal. Zie
-[Flows](./flows/) voor de kanaalspecifieke functionele ontwerpen.
+Het functioneel ontwerp beschrijft eerst het verloop binnen de mijnomgeving:
+welke stappen doorloopt de gebruiker, welke states zijn relevant en welke
+keuzes zijn specifiek voor dit kanaal. Zie
+[Functioneel ontwerp](./functioneel-ontwerp/) voor de kanaalspecifieke
+uitwerking.
 
 Schermprofielen maken daarna de mapping concreet van schermgedrag naar
-functionele flows en InteractieServices API-operaties. Ze combineren screenshot,
-UI-states, interacties en API-aanroepen in één feedbackbaar profiel.
+het functioneel ontwerp en InteractieServices API-operaties. Ze combineren
+screenshot, UI-states, interacties en API-aanroepen in één feedbackbaar profiel.
 
 Elk scherm krijgt een eigen pagina met een korte omschrijving, een Figma-link of
 screenshot, en een interactietabel: per UI-element de interactie en de

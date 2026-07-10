@@ -1,9 +1,13 @@
 ---
 sidebar_position: 1
-sidebar_label: Interactiepatronen
+sidebar_label: Generieke klantroute
 ---
 
-# Interactiepatronen in klantreizen
+# Generieke klantroute
+
+MijnServices standaardiseert niet op één kanaal of één bronsysteem, maar op de
+interactie daartussen: de herkenbare patronen waarmee inwoners, ondernemers en
+medewerkers publieke dienstverlening gebruiken.
 
 Een inwoner die een parkeervergunning aanvraagt bij de gemeente, moet diezelfde
 logica herkennen wanneer zij een toeslag aanvraagt bij de Belastingdienst. Toch

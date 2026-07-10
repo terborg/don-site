@@ -3,8 +3,8 @@ version: 0.1.0
 status: ontwerp
 title: Schermprofiel MijnTaken in de mijnomgeving
 summary: >
-  Kanaalprofiel dat schermen in een mijnomgeving koppelt aan functionele flows
-  en operaties van de InteractieServices API.
+  Kanaalprofiel dat schermen in een mijnomgeving koppelt aan het functioneel
+  ontwerp en operaties van de InteractieServices API.
 
 sources:
   functioneelModel:
