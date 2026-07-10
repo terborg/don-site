@@ -14,6 +14,6 @@ attenderingen.
 
 De NotifyNL API is een mogelijke voorziening voor de technische aflevering van
 attenderingen. Het patroon voor wanneer en hoe iemand wordt geattendeerd staat
-bij [Attenderen en notificeren](../interactie/attenderen).
+bij [Attenderen en notificeren](../interactie-patronen/attenderen).
 
 Bron: [Worth-NL/notifynl-api](https://github.com/Worth-NL/notifynl-api).
