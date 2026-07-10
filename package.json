@@ -14,6 +14,7 @@
     "serve": "docusaurus serve",
     "docs:openapi:generate": "docusaurus gen-api-docs all",
     "docs:mijn-services:generate-models": "cd tools/mijn-services && poetry run mijn-services generate-functional-models",
+    "docs:mijn-services:capture-screens": "node scripts/capture-screen-snapshots.mjs",
     "tools:mijn-services:install": "cd tools/mijn-services && poetry install",
     "tools:mijn-services:validate": "cd tools/mijn-services && poetry run mijn-services validate",
     "write-translations": "docusaurus write-translations",
@@ -60,8 +61,10 @@
     "docusaurus-theme-openapi-docs": "4.7.0",
     "npm-run-all": "^4.1.5",
     "path-browserify": "^1.0.1",
+    "playwright": "^1.56.0",
     "sass-loader": "^16.0.8",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "yaml": "^2.8.0"
   },
   "peerDependencies": {
     "node-forge": "1.3.3",

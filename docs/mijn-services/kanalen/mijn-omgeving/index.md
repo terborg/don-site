@@ -63,7 +63,7 @@ een eenduidige en intuïtieve digitale ervaring voor inwoners en ondernemers.
 ## MijnZaken in de mijnomgeving
 
 In de mijnomgeving krijgt de interactiebouwsteen
-[MijnZaken](../bouwstenen/mijn-zaken/) een concrete presentatie. De uitwerking
+[MijnZaken](../../bouwstenen/mijn-zaken/) een concrete presentatie. De uitwerking
 volgt de abstracte interactielogica van MijnZaken, maar maakt keuzes voor
 schermopbouw, navigatie, componenten en visuele prioritering.
 
@@ -96,12 +96,24 @@ Belangrijke elementen:
 - verwachte volgende stap;
 - metadata over actualiteit en bron.
 
-### Schermen
+### Flows en schermprofielen
+
+User-flows en functionele ontwerpen beschrijven eerst het verloop binnen de
+mijnomgeving: welke stappen doorloopt de gebruiker, welke states zijn relevant
+en welke keuzes zijn specifiek voor dit kanaal. Zie
+[Flows](./flows/) voor de kanaalspecifieke functionele ontwerpen.
+
+Schermprofielen maken daarna de mapping concreet van schermgedrag naar
+functionele flows en InteractieServices API-operaties. Ze combineren screenshot,
+UI-states, interacties en API-aanroepen in één feedbackbaar profiel.
 
 Elk scherm krijgt een eigen pagina met een korte omschrijving, een Figma-link of
 screenshot, en een interactietabel: per UI-element de interactie en de
 bijbehorende API-aanroep(en). Schermen worden geïdentificeerd met het patroon
 `SCR-<ONDERWERP>`.
+
+Eerste visuele schermprofiel:
+[Taken in context](./schermprofielen/taken-in-context).
 
 Startpunt voor deze uitwerking:
 [MijnZaken-overzicht in Figma](https://www.figma.com/proto/O3Wzm9ANIRHQTK98X0ljYs/VNG-mijn-services-prototype?node-id=9427-21196&starting-point-node-id=9448%3A758053).

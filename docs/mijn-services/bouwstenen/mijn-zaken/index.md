@@ -245,7 +245,7 @@ informatie uit andere MijnServices-bouwstenen.
 
 De concrete presentatie van MijnZaken hoort bij de kanalen waarin de bouwsteen
 wordt gebruikt. De eerste uitwerking staat bij
-[kanaal: mijnomgeving](../../kanalen/mijnomgeving).
+[kanaal: mijnomgeving](../../kanalen/mijn-omgeving).
 
 ## Aansluiten op bronnen en standaarden
 
