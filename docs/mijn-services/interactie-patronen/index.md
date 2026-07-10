@@ -3,7 +3,7 @@ sidebar_position: 0
 sidebar_label: Overzicht
 ---
 
-# Interactie
+# Interactiepatronen
 
 MijnServices standaardiseert niet op één kanaal of één bronsysteem, maar op de
 interactie daartussen. Interactie beschrijft de herkenbare patronen waarmee
