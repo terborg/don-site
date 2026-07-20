@@ -2,127 +2,63 @@
 sidebar_position: 0
 ---
 
-import { Card } from "@rijkshuisstijl-community/components-react";
-import Grid from "../../src/components/Grid";
+# MijnServices: betere dienstverlening
 
-# MijnServices: naar een 1-overheidsbeleving
+MijnServices maakt publieke dienstverlening begrijpelijk, proactief en
+betrouwbaar. De [1-overheidsbeleving](https://www.digitaleoverheid.nl/overzicht-van-alle-onderwerpen/overheidsbrede-dienstverlening/loketfunctie-overheid/)
+is het resultaat: actuele, eenduidige dienstverlening, via [elk kanaal](https://www.digitaleoverheid.nl/overzicht-van-alle-onderwerpen/overheidsbrede-dienstverlening/omnichannel-aanpak/).
 
-Inwoners en ondernemers verwachten transparante en persoonlijke dienstverlening
-via elk kanaal. Of ze nu
-[bellen, mailen, inloggen of aan de balie geholpen worden](https://www.digitaleoverheid.nl/overzicht-van-alle-onderwerpen/overheidsbrede-dienstverlening/omnichannel-aanpak/):
-de inhoud moet overal actueel en eenduidig zijn. Met deze
-[1-overheidsbeleving](https://www.digitaleoverheid.nl/overzicht-van-alle-onderwerpen/overheidsbrede-dienstverlening/loketfunctie-overheid/)
-staat de gebruiker centraal, niet de interne organisatie van de overheid.
+## MijnServices standaardiseert op interactie
 
-MijnServices helpen overheidsorganisaties om die consistente dienstverlening ook
-echt te organiseren. Met gedeelde bouwstenen voor inwoners, ondernemers en
-medewerkers geeft het invulling aan de digitale kant van de 1-overheidsbeleving,
-met dezelfde actuele context voor zaken, berichten, taken en andere interacties
-over kanalen heen.
+MijnServices is de interactielaag tussen kanalen en uitvoerende systemen. We
+standaardiseren niet op een mijnomgeving, baliesysteem of zaaksysteem, maar op
+wat iemand wil weten, doen, volgen of beheren.
 
-## De drie pijlers van consistentie
+```mermaid
+flowchart TB
+  Kanalen["Kanalen<br/>MijnOmgeving, balie/KCC, e-mail, post"]
+  Interactie["MijnServices: interactielaag<br/>interactietypen, bouwstenen, functionele modellen,<br/>Interactieservices API en aansluitprofielen"]
+  Systemen["Systemen<br/>gemeenten, Rijk, zbo's en andere uitvoerders"]
+  Kanalen <--> Interactie <--> Systemen
+```
 
-Voor die digitale consistentie werken we langs drie lijnen: gedrag, vorm en
-inhoud.
+Interactietypen benoemen terugkerende gebruikersbehoeften. [Bouwstenen](./bouwstenen/),
+modellen, API's en aansluitprofielen maken ze herbruikbaar, in elk kanaal en met
+elk bronsysteem.
 
-| Pijler | Uitwerking             | Projecten / Standaarden                                                                                                 |
-| ------ | ---------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Gedrag | Voorspelbaar verloop   | Service blueprints, de generieke klantroute                                                                             |
-| Vorm   | Herkenbare presentatie | [NL Design System](/communities/nl-design-system) (mijnomgeving), [Gebruiker Centraal](/communities/gebruiker-centraal) |
-| Inhoud | Actuele dossierkennis  | Data bij de bron, Federatief datastelsel, NL API Strategie                                                              |
+## De kapstok: de dienstverleningscyclus
 
-MijnServices werkt over deze drie pijlers heen en verbindt gedrag, vorm en
-inhoud in concrete digitale bouwstenen.
+De [generieke klantroute](./interactie-patronen/) ordent dienstverlening vanuit
+de levenscyclus van de gebruiker, niet vanuit organisatieonderdelen, formulieren
+of systemen.
 
-## Voorspelbaar verloop
+| Fase | Wat iemand nodig heeft | Terugkerende interactietypen |
+| --- | --- | --- |
+| Oriënteren en voorbereiden | Begrijpen wat er speelt en wat mogelijk is | Attenderen; mogelijkheden en rechten verkennen |
+| Handelen en voortgang volgen | Doen wat nodig is en weten waar men aan toe is | Taken uitvoeren; status volgen |
+| Afronden en beheren | Regie houden, kunnen terugkijken en hulp krijgen | Gegevens beheren; historie inzien; hulp en ondersteuning krijgen |
 
-We ontwikkelen services op basis van generieke interactiepatronen die aansluiten
-op [Life Events](http://data.europa.eu/m8g/LifeEvent) (levensgebeurtenissen).
-Wanneer iemand verhuist, een kind krijgt of een bedrijf start, wil diegene niet
-weten welke vijf overheidsinstanties daarbij betrokken zijn. De service moet
-aansluiten op het doel van de gebruiker.
+Dit is geen lineair proces: hulp kan in elke fase nodig zijn en een besluit kan
+een nieuwe oriëntatie starten. Gebruik de cyclus om klantreizen en bouwstenen te
+ontwerpen.
 
-Het proces start daarom altijd met het in kaart brengen van de klantreis — of
-het nu gaat om een grote levensgebeurtenis of een specifieke taak zoals het
-verlengen van een parkeervergunning. Hierin identificeren we de
-interactiemomenten tussen de klant en de overheid en stellen de vraag: welke
-bouwsteen lost dit het beste op?
+## Waar begin ik?
 
-### Service blueprints
+| Rol | Start bij | Daarna |
+| --- | --- | --- |
+| Service designer, beleidsmedewerker of product owner | [Interactie](./interactie-patronen/) | Kies de interactietypen en bijpassende bouwstenen voor de klantreis. |
+| Functioneel ontwerper | [Bouwstenen](./bouwstenen/) | Werk de benodigde informatie en het gedrag per kanaal uit. |
+| Front-end developer | [Kanaal: MijnOmgeving](./kanalen/mijn-omgeving) | Vertaal de bouwsteen naar een toegankelijk scherm en sluit aan op het NL Design System. |
+| Back-end- of API-developer | [Functionele modellen](./specificaties/functionele-modellen/) en de [Interactieservices API](./specificaties/interactieservices-api/) | Implementeer de API-contracten en kies het passende aansluitprofiel voor de koppeling met een bronsysteem. |
+| Architect | [Architectuur en standaarden](./architectuur-en-standaarden/) | Borg de samenhang tussen kanalen, interactielaag, standaarden en systemen. |
 
-In een Service Blueprint brengen we de klantreis in kaart en koppelen deze aan
-de interne processen, systemen en data die nodig zijn om die reis mogelijk te
-maken.
+## Drie randvoorwaarden
 
-### Interactiepatronen in klantreizen
+| Pijler | Vereiste | Uitwerking |
+| --- | --- | --- |
+| Gedrag | Voorspelbaar verloop | Service blueprints en de generieke klantroute |
+| Vorm | Herkenbare presentatie | [NL Design System](/communities/nl-design-system) en [Gebruiker Centraal](/communities/gebruiker-centraal) |
+| Inhoud | Actuele dossierkennis | Data bij de bron, Federatief Datastelsel en NL API Strategie |
 
-Uit meer dan 200 klantreisonderzoeken blijkt dat interactiepatronen — zoals
-aanvragen, status bekijken of bezwaar maken — steeds volgens hetzelfde pad
-verlopen. De generieke klantroute beschrijft dit pad en maakt het toepasbaar
-voor elke overheidsdienst. Lees meer over
-[generieke klantroute](./interactie-patronen/generieke-klantroute).
-
-## Herkenbare presentatie
-
-Om herkenbaar en voorspelbaar te zijn, maken we gebruik van vaste visuele
-patronen, interactie-elementen en schermopbouw. Dit zorgt ervoor dat een
-gebruiker die vertrouwd is met een aanvraag bij de gemeente, net zo makkelijk de
-weg vindt bij de Belastingdienst of het UWV.
-
-### Kanaal: mijnomgeving
-
-Een belangrijk kanaal binnen deze pijler is de **mijnomgeving**: de ingelogde
-omgeving waarin inwoners en ondernemers hun zaken, berichten en taken
-terugvinden. Juist daar moet de presentatie herkenbaar, voorspelbaar en
-toegankelijk zijn. Lees meer op [kanaal: mijnomgeving](./kanalen/mijn-omgeving).
-
-### NL Design System
-
-We hanteren hierbij de principes van
-[Gebruiker Centraal](https://www.gebruikercentraal.nl/) en het
-[NL Design System](/communities/nl-design-system), zodat taal,
-interface-elementen en schermopbouw voor gebruikers herkenbaar blijven over
-organisaties heen.
-
-## Actuele dossierkennis
-
-Een burger verwacht dat de overheid kanaalonafhankelijk op de hoogte is van
-diens dossier. We stappen af van gesloten silo-applicaties en scheiden de
-interactie, proceslogica en gegevens van elkaar.
-
-### Data bij de bron
-
-We stappen af van het traditionele model waarbij elke applicatie zijn eigen
-kopie van gegevens opslaat. In plaats daarvan halen we gegevens real-time op via
-API's bij de bronhouder (zoals de BRP voor persoonsgegevens of het Kadaster voor
-vastgoed).
-
-Dit zorgt ervoor dat:
-
-- **Informatie altijd actueel is:** Er zijn geen vertragingen door
-  synchronisatie.
-- **Privacy beter gewaarborgd is:** Data wordt niet onnodig vermenigvuldigd.
-- **De last voor de burger daalt:** "Wet is weet": de overheid vraagt niet naar
-  bekende gegevens.
-
-### Federatief datastelsel
-
-Om data bij de bron te kunnen bevragen, is goede samenwerking nodig tussen alle
-overheidslagen. Het
-[Federatief Datastelsel](/communities/federatief-datastelsel) zorgt voor de
-uniforme afspraken en standaarden die nodig zijn om data veilig en betrouwbaar
-uit te wisselen tussen Rijk, provincies, gemeenten en waterschappen.
-Initiatieven zoals [Common Ground](https://commonground.nl/) sluiten hier op
-aan. Zo ontstaat een stelsel waarin systemen met elkaar 'praten' zonder dat er
-één centrale database nodig is.
-
-### NL API Strategie
-
-De taal waarin systemen met elkaar praten moet eenduidig zijn. Hiervoor hanteren
-we de
-[NL API Strategie](https://docs.geostandaarden.nl/api/API-Strategie-architectuur/).
-Door de API's aan kwaliteitscriteria zoals de
-[API Design Rules](/kennisbank/api-ontwikkeling/standaarden/api-design-rules) te
-toetsen, zorgen we ervoor dat een ontwikkelaar die een koppeling maakt met de
-gemeente, met dezelfde kennis ook kan koppelen met de Rijksoverheid. Dit
-versnelt de ontwikkeling van nieuwe services en verlaagt de beheerkosten.
+Deze randvoorwaarden maken de interactielaag consistent over organisaties en
+kanalen heen.
