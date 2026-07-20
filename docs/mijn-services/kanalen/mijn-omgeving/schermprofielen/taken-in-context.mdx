@@ -52,9 +52,6 @@ sidebar_label: Taken in context
 
 .screen-profile-pin {
   position: absolute;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   inline-size: 2.5rem;
   block-size: 2.5rem;
   border: 3px solid white;
@@ -64,6 +61,14 @@ sidebar_label: Taken in context
   font-weight: 700;
   text-decoration: none;
   box-shadow: 0 0.25rem 0.75rem rgb(15 23 42 / 28%);
+  transform: translate(-50%, -50%);
+}
+
+.screen-profile-pin__label {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  line-height: 1;
   transform: translate(-50%, -50%);
 }
 
@@ -138,10 +143,10 @@ sidebar_label: Taken in context
         alt="Web-large screenshot van het scherm Taken in context in een mijnomgeving."
       />
       <a className="screen-profile-pin screen-profile-pin--c2" href="#annotatie-c2" aria-label="Annotatie C.2: taak selecteren in lijst">
-        C.2
+        <span className="screen-profile-pin__label">C.2</span>
       </a>
       <a className="screen-profile-pin screen-profile-pin--c5" href="#annotatie-c5" aria-label="Annotatie C.5: afronden">
-        C.5
+        <span className="screen-profile-pin__label">C.5</span>
       </a>
     </div>
   </div>
