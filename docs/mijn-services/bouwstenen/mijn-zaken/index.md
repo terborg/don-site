@@ -1,8 +1,8 @@
 ---
 sidebar_position: 2
 description: >
-  MijnZaken biedt procestransparantie en handelingsperspectief bij lopende en
-  afgeronde dienstverleningsprocessen.
+  MijnZaken geeft kanaalonafhankelijk overzicht, uitleg en
+  handelingsperspectief bij lopende en afgeronde dienstverlening.
 sidebar_custom_props:
   icon: /img/mijn-services/icons/mijn-zaken.svg
 ---
@@ -16,23 +16,16 @@ veranderen.
 
 :::
 
-MijnZaken geeft inwoners en ondernemers inzicht in lopende en afgeronde
-dienstverleningsprocessen met de overheid. De bouwsteen vertaalt interne
-procesinformatie naar begrijpelijke, betrouwbare en handelingsgerichte
-informatie: waar staat het proces, wat is er al gebeurd en wat wordt er nog van
-de gebruiker verwacht?
+MijnZaken brengt de context van een zaak samen: status, gebeurtenissen,
+documenten, besluiten, contact en relevante vervolgstappen. De bouwsteen maakt
+deze informatie begrijpelijk en bruikbaar, onafhankelijk van het kanaal of
+onderliggende systeem.
 
 ## Doel
 
-Het doel van MijnZaken is het wegnemen van onzekerheid. Een proces dat voor de
-gebruiker vaak voelt als een black box, wordt een proces dat te volgen en te
-begrijpen is.
-
-Daardoor hoeft iemand minder te bellen of te zoeken naar informatie en weet die
-persoon beter waar die aan toe is.
-
-De waarde van MijnZaken ontstaat niet doordat een organisatie zaakdata toont,
-maar doordat een inwoner of ondernemer grip ervaart:
+Het doel van MijnZaken is grip op de eigen dienstverlening: wat speelt er, wat
+betekent het en wat is de volgende stap? De waarde ontstaat niet door zaakdata
+te tonen, maar doordat een inwoner of ondernemer:
 
 - begrijpen welke zaken lopen of zijn afgerond;
 - herkennen waar een zaak over gaat;

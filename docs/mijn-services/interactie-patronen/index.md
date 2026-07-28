@@ -1,9 +1,9 @@
 ---
 sidebar_position: 0
-sidebar_label: Interactie
+sidebar_label: Interactie met de overheid
 ---
 
-# Interactie
+# Interactie met de overheid
 
 MijnServices standaardiseert niet op één kanaal of één bronsysteem, maar op de
 interactie daartussen: wat inwoners, ondernemers en medewerkers willen weten,
@@ -24,13 +24,22 @@ schrijven dat iedereen dezelfde stappen in dezelfde volgorde doorloopt.
 Hulp kan in elke fase nodig zijn. Een besluit of wijziging kan een nieuwe
 oriëntatie starten.
 
-## Attenderen
+## Voorbeeld: attenderen
 
-Attenderen wijst iemand op een relevante verandering of vervolgstap, zoals een
-nieuw bericht, taak, gewijzigde zaak of naderende afspraak. Maak duidelijk wat
-nieuw is, of actie nodig is en waar iemand veilig verder kan. Stem inhoud,
-timing en kanaal af op de situatie en gebruik geen privacygevoelige informatie
-in ongeschikte kanalen.
+Attenderen laat zien hoe de interactielaag werkt. Een gebeurtenis in een systeem
+kan leiden tot een nieuw bericht, taak, gewijzigde zaak of naderende afspraak.
+MijnServices maakt daarvan een herkenbare vervolgstap voor de gebruiker; het
+kanaal bepaalt hoe die wordt getoond of afgeleverd.
+
+| Onderdeel | Rol |
+| --- | --- |
+| Systeem | Levert de gebeurtenis, bijvoorbeeld een nieuwe taak of gewijzigde zaak. |
+| Interactie | Bepaalt wat nieuw is, of actie nodig is en waar iemand verder kan. |
+| Kanaal | Toont of bezorgt de attendering, bijvoorbeeld in de mijnomgeving, via e-mail, SMS, KCC of balie. |
+
+Maak attenderingen concreet en verwijs naar een veilige plek om verder te gaan.
+Stem inhoud, timing en kanaal af op de situatie en gebruik geen
+privacygevoelige informatie in ongeschikte kanalen.
 
 ## Van interactie naar implementatie
 
